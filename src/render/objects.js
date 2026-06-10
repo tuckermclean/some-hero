@@ -1,0 +1,85 @@
+// World object rendering: pushable blocks, braziers, pickups.
+
+import { T } from '../constants.js';
+
+export function drawBlocks(ctx, game) {
+  for (const b of game.blocks) {
+    ctx.fillStyle = '#a8835a'; ctx.fillRect(b.rx + 3, b.ry + 3, T - 6, T - 6);
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(b.rx + 5, b.ry + 5, T - 10, 6);
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(b.rx + 5, b.ry + T - 11, T - 10, 6);
+    ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.strokeRect(b.rx + 3.5, b.ry + 3.5, T - 7, T - 7);
+  }
+}
+
+export function drawTorches(ctx, game) {
+  const t = game.t, pz = game.puzzle;
+  for (const to of game.torches) {
+    const cx = to.tx * T + T / 2, cy = to.ty * T + T / 2;
+    ctx.fillStyle = '#5a4a3c'; ctx.fillRect(cx - 5, cy - 2, 10, 12);
+    ctx.fillStyle = '#3a2c22'; ctx.beginPath(); ctx.arc(cx, cy - 4, 8, Math.PI, 0); ctx.fill();
+    if (to.lit) {
+      const fl = 1 + Math.sin(t * 14 + cx) * .2;
+      const g = ctx.createRadialGradient(cx, cy - 10, 2, cx, cy - 10, 30);
+      g.addColorStop(0, 'rgba(242,166,75,.55)'); g.addColorStop(1, 'rgba(242,166,75,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy - 10, 30, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f2a64b';
+      ctx.beginPath(); ctx.moveTo(cx - 5, cy - 6); ctx.quadraticCurveTo(cx, cy - 22 * fl, cx + 5, cy - 6); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffe9b8';
+      ctx.beginPath(); ctx.moveTo(cx - 2, cy - 6); ctx.quadraticCurveTo(cx, cy - 13 * fl, cx + 2, cy - 6); ctx.closePath(); ctx.fill();
+      if (pz && pz.type === 'torch' && !pz.solved) {
+        ctx.strokeStyle = '#f2a64b'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy - 10, 13, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, to.tm / pz.time));
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+export function drawPickups(ctx, game) {
+  const t = game.t;
+  for (const p of game.pickups) {
+    if (p.kind === 'gold') {
+      ctx.fillStyle = '#f2d27a'; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#b9933a'; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.stroke();
+    } else if (p.kind === 'heart') {
+      ctx.fillStyle = '#e0644b'; ctx.beginPath();
+      ctx.arc(p.x - 3, p.y - 2, 4, 0, Math.PI * 2); ctx.arc(p.x + 3, p.y - 2, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(p.x - 7, p.y); ctx.lineTo(p.x, p.y + 8); ctx.lineTo(p.x + 7, p.y); ctx.fill();
+    } else if (p.kind === 'potion') {
+      ctx.fillStyle = '#74c4b8'; ctx.fillRect(p.x - 4, p.y - 3, 8, 9);
+      ctx.fillStyle = '#8a6a52'; ctx.fillRect(p.x - 2, p.y - 7, 4, 4);
+    } else if (p.kind === 'key') {
+      const g = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, 22);
+      g.addColorStop(0, 'rgba(242,210,122,.55)'); g.addColorStop(1, 'rgba(242,210,122,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 22, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#d8a93f'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(p.x - 4, p.y, 4, 0, Math.PI * 2); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 9, p.y);
+      ctx.moveTo(p.x + 6, p.y); ctx.lineTo(p.x + 6, p.y + 4); ctx.moveTo(p.x + 9, p.y); ctx.lineTo(p.x + 9, p.y + 4); ctx.stroke();
+    } else if (p.kind === 'maxheart') {
+      ctx.strokeStyle = '#f2d27a'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#e0644b'; ctx.beginPath();
+      ctx.arc(p.x - 3, p.y - 2, 4, 0, Math.PI * 2); ctx.arc(p.x + 3, p.y - 2, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(p.x - 7, p.y); ctx.lineTo(p.x, p.y + 8); ctx.lineTo(p.x + 7, p.y); ctx.fill();
+    } else if (p.kind === 'sword') {
+      const g = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, 24);
+      g.addColorStop(0, 'rgba(242,210,122,.5)'); g.addColorStop(1, 'rgba(242,210,122,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 24, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f2d27a'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p.x - 6, p.y + 7); ctx.lineTo(p.x + 6, p.y - 7);
+      ctx.moveTo(p.x - 2, p.y + 1); ctx.lineTo(p.x - 7, p.y - 4); ctx.stroke();
+    } else if (p.kind === 'amulet') {
+      const g = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, 30);
+      g.addColorStop(0, 'rgba(242,210,122,.8)'); g.addColorStop(1, 'rgba(242,210,122,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 30, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f2d27a'; ctx.beginPath();
+      const s = Math.sin(t * 3) * .15 + 1;
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2 + t;
+        ctx.lineTo(p.x + Math.cos(a) * (i % 2 ? 5 : 11) * s, p.y + Math.sin(a) * (i % 2 ? 5 : 11) * s);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+  }
+}
