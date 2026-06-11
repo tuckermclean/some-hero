@@ -66,4 +66,10 @@ test('tombQuestLine reflects each puzzle type and solved state', () => {
   game.puzzle = { type: 'torch', n: 4, solved: false };
   game.torches = [{ lit: true }, { lit: false }, { lit: true }, { lit: false }];
   assert.match(tombQuestLine(game), /2 \/ 4/);
+
+  game.puzzle = { type: 'traps', done: 1, need: 4, solved: false };
+  assert.match(tombQuestLine(game), /incidents/);
+  assert.match(tombQuestLine(game), /1 \/ 4/);
+  game.puzzle.solved = true;
+  assert.match(tombQuestLine(game), /stairs open/);
 });

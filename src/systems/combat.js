@@ -5,6 +5,7 @@ import { burst } from '../entities/particles.js';
 import { gainXp } from './progression.js';
 import { dropLoot } from './loot.js';
 import { recordScarabKill } from './quest.js';
+import { union206Line } from './ledger.js';
 
 /** Player melee damage from sword tier + level. */
 export function swordDmg(player) {
@@ -44,6 +45,10 @@ export function hitEnemy(game, e, dmg, kx, ky, fx) {
     e.dead = true;
     game.runStats.kills++;
     game.runStats.killsByKind[e.kind] = (game.runStats.killsByKind[e.kind] || 0) + 1;
+    // the first Front Office casualty of each run was a union member
+    if (game.zone === 'tomb' && game.floorNum <= 4 && game.runStats.kills === 1) {
+      fx.toast(union206Line());
+    }
     gainXp(game, e.xpv, fx);
     dropLoot(game.pickups, e.x, e.y, game.rng);
     if (e.kind === 'scarab' && recordScarabKill(game.quest)) fx.questChanged();

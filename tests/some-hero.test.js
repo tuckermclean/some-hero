@@ -183,15 +183,17 @@ test('the full chain: contact kill records a cause the Ledger can use', () => {
 
 test('pinned rooms always generate, are tagged, connected, and never hold stairs', () => {
   const h2 = makeHash2(1, 2);
-  for (let seed = 1; seed <= 10; seed++) {
-    const g = generateFloor(2, h2, mulberry32(seed), [{ w: 5, h: 4, tag: 'breakroom' }]);
-    assert.equal(g.pinnedRooms.length, 1);
-    const r = g.pinnedRooms[0];
-    assert.equal(r.tag, 'breakroom');
-    // every tile of the pinned room is carved floor (and not stairs)
-    for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) {
-      const v = g.world.map[y * g.world.w + x];
-      assert.ok(v === TL.TF || v === TL.PLATE, `pinned room tile is ${v}`);
+  for (let seed = 1; seed <= 100; seed++) {
+    for (const f of [1, 2, 4, 5]) {
+      const g = generateFloor(f, h2, mulberry32(seed), [{ w: 5, h: 4, tag: 'breakroom' }]);
+      assert.equal(g.pinnedRooms.length, 1);
+      const r = g.pinnedRooms[0];
+      assert.equal(r.tag, 'breakroom');
+      // every tile of the pinned room is carved floor (and not stairs)
+      for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) {
+        const v = g.world.map[y * g.world.w + x];
+        assert.ok(v === TL.TF || v === TL.PLATE, `seed ${seed} floor ${f}: pinned room tile is ${v}`);
+      }
     }
   }
 });

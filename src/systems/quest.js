@@ -44,6 +44,7 @@ export function tombQuestLine(game) {
   if (pz.type === 'key') return s + (pz.have ? '<b>stairs open ↓</b>' : 'find the <b>bronze key</b>');
   if (pz.type === 'plates') return s + (pz.solved ? '<b>stairs open ↓</b>' : 'plates <b>' + pz.done + ' / ' + pz.need + '</b>');
   if (pz.type === 'riddle') return s + (pz.solved ? '<b>stairs open ↓</b>' : 'answer <b>the door</b>');
+  if (pz.type === 'traps') return s + (pz.solved ? '<b>stairs open ↓</b>' : 'incidents <b>' + pz.done + ' / ' + pz.need + '</b>');
   const lit = game.torches.filter(o => o.lit).length;
   return s + (pz.solved ? '<b>stairs open ↓</b>' : 'braziers <b>' + lit + ' / ' + pz.n + '</b>');
 }

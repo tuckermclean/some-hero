@@ -16,8 +16,12 @@ export function makeEffects(overrides = {}) {
     onPlayerDeath() {},    // hp hit zero
     onAmuletFound() {},    // overworld guardian's amulet collected (win screen)
     onGolemEntry(missing) {},   // blocked at the dungeon mouth; missing credentials
-    onGolemApproval() {},       // the stamp ceremony (exactly once; the pause is sacred)
-    onGolemCustoms(gold) {},    // surfacing with undeclared dungeon gold
+    onGolemApproval(done) {     // the stamp ceremony (exactly once; the pause is
+      done && done();           // sacred). Entry waits for `done` — the screen must
+    },                          // not give the verdict away before the golem does.
+    onGolemCustoms(gold, done) { // surfacing with dungeon gold; inspection happens
+      done && done();            // AT the door — `done` releases you into daylight
+    },
     onRiddle() {},              // the riddle door has a question
     ...overrides
   };

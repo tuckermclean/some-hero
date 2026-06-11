@@ -9,6 +9,7 @@ import { makeHud } from './ui/hud.js';
 import { makeToast } from './ui/toast.js';
 import { makeDialog } from './ui/dialog.js';
 import { makeScreens } from './ui/screens.js';
+import { makeSplash } from './ui/splash.js';
 import { makeStick } from './input/stick.js';
 import { makeKeyboard } from './input/keyboard.js';
 import { talkTo } from './content/dialogue.js';
@@ -29,7 +30,9 @@ const els = {
   hud: $('hud'), hpFill: $('hpFill'), xpFill: $('xpFill'), statline: $('statline'),
   questEl: $('quest'), btnA: $('btnA'), btnP: $('btnP'),
   dlg: $('dlg'), dlgName: $('dlgName'), dlgText: $('dlgText'), dlgBtns: $('dlgBtns'), dlgHint: $('dlgHint'),
-  menu: $('menu'), over: $('over'), overTitle: $('overTitle'), overSub: $('overSub'), overTip: $('overTip'),
+  over: $('over'), overTitle: $('overTitle'), overSub: $('overSub'), overTip: $('overTip'),
+  splash: $('splash'), splashStamp: $('splashStamp'), splashLedger: $('splashLedger'),
+  splashPress: $('splashPress'), embers: $('embers'),
   toast: $('toast'), stickBase: $('stickBase'), stickKnob: $('stickKnob')
 };
 
@@ -51,6 +54,10 @@ const hud = makeHud(els);
 const toast = makeToast(els.toast);
 const screens = makeScreens(els);
 const dialog = makeDialog(game, els, () => playSfx('talk'));
+const splash = makeSplash(
+  { splash: els.splash, stamp: els.splashStamp, ledger: els.splashLedger,
+    press: els.splashPress, embers: els.embers },
+  { onStart: startGame });
 
 const fx = makeEffects({
   sfx: playSfx,
@@ -81,21 +88,23 @@ const fx = makeEffects({
 
   // ---- the Door Golem ----
   onGolemEntry: missing => dialog.say('Door Golem', entryLines(game, missing)),
-  onGolemApproval: () => dialog.say('Door Golem', approvalLines(game)),
-  onGolemCustoms: gold => {
-    dialog.say('Door Golem', customsIntro(gold), () => {
+  // entry waits for the stamp: the trapdoor opens when the ceremony ends
+  onGolemApproval: done => dialog.say('Door Golem', approvalLines(game), done),
+  // customs happens AT the door; `done` releases the player into daylight
+  onGolemCustoms: (gold, done) => {
+    const ask = () => {
       dialog.setSpeaker('Door Golem');
       dialog.setText('Anything to declare?');
       dialog.open();
       dialog.choice([
-        { label: 'Declare it', fn: () => { dialog.setText(declareOutcome(gold)); dialog.showHint(); } },
-        { label: '"Nothing to declare."', fn: () => { dialog.setText(smuggleOutcome(game)); dialog.showHint(); } },
-        { label: '\u{1F4D3} Read his little book', fn: () => {
-          dialog.setText(suspicionBook(game.meta).join('  '));
-          dialog.showHint();
-        }}
+        { label: 'Declare it', fn: () => dialog.say('Door Golem', [declareOutcome(gold)], done) },
+        { label: '"Nothing to declare."', fn: () => dialog.say('Door Golem', [smuggleOutcome(game)], done) },
+        { label: '\u{1F4D3} Read his little book', fn: () =>
+          // a peek, not an answer — the question is still pending
+          dialog.say('Door Golem', suspicionBook(game.meta), ask) }
       ]);
-    });
+    };
+    dialog.say('Door Golem', customsIntro(gold), ask);
   },
 
   // ---- the Riddle Door That Learned Its Lesson ----
@@ -125,16 +134,19 @@ const { stick, start: startStick } = makeStick(els.stickBase, els.stickKnob);
 const kb = makeKeyboard({
   onConfirm: () => {
     if (game.state === ST.DIALOG) dialog.advance();
-    else if (game.state === ST.MENU) startGame();
+    else if (game.state === ST.MENU) return;  // the splash owns menu keys
     else if (game.state === ST.DEAD) resurrect();
     else bufferAttack(game);
   },
-  onPotion: () => usePotion(game, fx)
+  onPotion: () => { if (game.state !== ST.MENU) usePotion(game, fx); }
 });
+
+// every key on the splash goes to the Ledger; only Enter starts
+window.addEventListener('keydown', e => { if (game.state === ST.MENU) splash.key(e); });
 
 let pendingDeath = null;
 window.addEventListener('pointerdown', e => {
-  if (game.state === ST.MENU) { startGame(); return; }
+  if (game.state === ST.MENU) { splash.pointer(e); return; }
   if (game.state === ST.DEAD) { resurrect(); return; }
   if (game.state === ST.WIN) { screens.closeOver(); game.state = ST.PLAY; return; }
   if (game.state === ST.DIALOG) { dialog.advance(); return; }
@@ -161,7 +173,6 @@ function resurrect() {
 function startGame() {
   newRun(game);
   game.state = ST.PLAY;
-  screens.hideMenu();
   screens.closeOver();
   hud.show();
   fx.hudChanged();
@@ -182,6 +193,9 @@ function loop(now) {
   render(ctx, game, screen);
   requestAnimationFrame(loop);
 }
+
+// e2e handle (tests/e2e): exposed only when the page is loaded with ?test
+if (new URLSearchParams(location.search).has('test')) window.__sh = { game, fx };
 
 // menu backdrop: a generated world behind the title
 newRun(game);

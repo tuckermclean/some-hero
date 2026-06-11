@@ -4,7 +4,8 @@
 
 import { T, TL, ST } from '../constants.js';
 import { completeQuest } from './quest.js';
-import { lootLine } from './ledger.js';
+import { lootLine, ledgerize } from './ledger.js';
+import { addMenace } from '../core/meta.js';
 
 export const MAGNET_RANGE = 60;
 export const COLLECT_RANGE = 16;
@@ -47,6 +48,13 @@ function collect(game, pk, fx) {
     case 'sword':
       p.swordLv = 3;
       fx.sfx('level'); fx.toast(lootLine('sword'));
+      break;
+    case 'guestbook':
+      // the gap guestbook (Floor 3 — Orientation). Signing it without
+      // falling in is, technically, documented behavior
+      addMenace(game.meta, 'Signed the gap guestbook without falling in. Suspicious.');
+      fx.sfx('talk');
+      fx.toast(ledgerize('Our hero signed the gap guestbook. The previous entry reads "minded it." Our hero wrote something original. The Ledger has corrected the spelling.'));
       break;
     case 'amulet': {
       completeQuest(game.quest);

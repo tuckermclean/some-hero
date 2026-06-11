@@ -1,0 +1,212 @@
+// End-to-end test: drives the real game in headless Chromium via Playwright.
+//
+//   npm run test:e2e
+//
+// Covers what node:test can't — the seams between DOM, input routing, and
+// game state: the splash timeline + the Ledger's key reactions + Enter-to-
+// start, the Door Golem's stamp ceremony playing TOPSIDE before descent,
+// the trap-counter room, and customs happening AT the door before daylight.
+//
+// Needs Playwright (`npm i --no-save playwright` if it isn't installed) and
+// a Chromium: $CHROME_PATH, /usr/bin/chromium, or Playwright's own download.
+// The game exposes window.__sh = { game, fx } only under ?test (see main.js);
+// the test uses it to grant credentials and teleport — every observation is
+// made through the real DOM and render loop.
+
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import { readFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { extname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
+const SHOTS = join(ROOT, 'tests/e2e/shots');
+await mkdir(SHOTS, { recursive: true });
+
+// ---------- a tiny static server (no dependencies) ----------
+const MIME = {
+  '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
+  '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon'
+};
+const server = http.createServer(async (req, res) => {
+  try {
+    const rel = normalize(decodeURIComponent(req.url.split('?')[0])).replace(/^[/\\]+/, '') || 'index.html';
+    const file = join(ROOT, rel);
+    const data = await readFile(file);
+    res.writeHead(200, { 'Content-Type': MIME[extname(file)] || 'application/octet-stream' });
+    res.end(data);
+  } catch { res.writeHead(404); res.end(); }
+});
+await new Promise(r => server.listen(0, r));
+const port = server.address().port;
+
+// ---------- browser ----------
+const executablePath = process.env.CHROME_PATH ||
+  (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined);
+const browser = await chromium.launch({ executablePath });
+const page = await browser.newPage({ viewport: { width: 1024, height: 600 } });
+const pageErrors = [];
+page.on('pageerror', e => pageErrors.push(e.message));
+
+const shot = name => page.screenshot({ path: join(SHOTS, name + '.png') });
+const ledger = () => page.evaluate(() => document.getElementById('splashLedger').innerText);
+const dlgName = () => page.evaluate(() => document.getElementById('dlgName').innerText);
+const dlgText = () => page.evaluate(() => document.getElementById('dlgText').innerText);
+const toast = () => page.evaluate(() => document.getElementById('toast').innerText);
+const quest = () => page.evaluate(() => document.getElementById('quest').innerText);
+const G = () => page.evaluate(() => {
+  const { game } = window.__sh;
+  return { zone: game.zone, state: game.state, floor: game.floorNum };
+});
+
+let steps = 0;
+const step = name => console.log('  ✓ ' + (++steps + '').padStart(2) + ' ' + name);
+
+try {
+  await page.goto(`http://localhost:${port}/?test`);
+
+  // ---------- the splash ----------
+  await page.waitForTimeout(8200);   // full timeline: stamp 5.2s, press 6.4s, note 7s
+  await shot('01-splash-full');
+  assert.match(await ledger(), /gazed upon the title screen/);
+  step('splash timeline plays; the Ledger is narrating');
+
+  await page.keyboard.press('x');
+  assert.equal(await page.evaluate(() =>
+    document.getElementById('splashStamp').classList.contains('wobble')), true);
+  await page.waitForTimeout(1500);
+  assert.match(await ledger(), /pressed a key\. boldly/);
+  step('a wrong key wobbles the stamp and is noted');
+
+  await page.keyboard.press(' ');
+  await page.waitForTimeout(1800);
+  assert.match(await ledger(), /ANOTHER key/);
+  assert.equal(await page.evaluate(() =>
+    document.getElementById('splash').classList.contains('fadeout')), false);
+  step('Space does not start the game (it is also noted)');
+
+  await page.mouse.click(200, 80);
+  await page.waitForTimeout(1500);
+  assert.match(await ledger(), /that was the screen/);
+  step('clicking the screen is, correctly, not a key');
+
+  for (let k = 0; k < 4; k++) { await page.keyboard.press('q'); await page.waitForTimeout(1900); }
+  assert.match(await ledger(), /the Start key is Enter/);
+  await shot('02-splash-ledger-cracked');
+  step('the Ledger cracks and names Enter');
+
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');   // double-Enter must not double-start
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() =>
+    document.getElementById('splash').classList.contains('fadeout')), true);
+  assert.equal((await G()).state, 1, 'PLAY behind the fade');
+  await page.waitForTimeout(1700);
+  assert.equal(await page.evaluate(() =>
+    getComputedStyle(document.getElementById('splash')).display), 'none');
+  await shot('03-overworld-after-start');
+  step('Enter starts; the splash fades off the live overworld');
+
+  // ---------- the Door Golem: ceremony topside, THEN descent ----------
+  await page.evaluate(() => {
+    const { game } = window.__sh;
+    game.meta.credentials.backstory = true;
+    game.meta.credentials.debt = true;
+    const T = 36;
+    const tx = Math.floor(game.player.x / T) + 2, ty = Math.floor(game.player.y / T);
+    game.world.map[ty * game.world.w + tx] = 12;   // TL.SD: a trapdoor
+    game.player.x = tx * T + T / 2; game.player.y = ty * T + T / 2;
+  });
+  await page.waitForTimeout(400);
+  assert.deepEqual(await G(), { zone: 'ow', state: 2, floor: 0 },
+    'still topside, in dialog, during the stamp ceremony');
+  assert.match(await dlgName(), /DOOR GOLEM/i);
+  assert.match(await dlgText(), /HALT\. Credential verification/);
+  await shot('04-ceremony-over-overworld');
+  step('the stamp ceremony plays over the overworld (no early dark screen)');
+
+  for (let k = 0; k < 12; k++) { await page.mouse.click(500, 120); await page.waitForTimeout(140); }
+  await page.waitForTimeout(600);
+  assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 1 });
+  await shot('05-tomb-after-ceremony');
+  step('descent happens only after the stamp');
+
+  // ---------- the Room That Renovation Forgot ----------
+  await page.evaluate(() => {
+    const { game } = window.__sh;
+    const T = 36;
+    const ptx = Math.floor(game.player.x / T), pty = Math.floor(game.player.y / T);
+    game.world.map[pty * game.world.w + (ptx + 1)] = 10;   // TL.TF
+    game.world.map[pty * game.world.w + (ptx + 2)] = 10;
+    game.puzzle = { type: 'traps', need: 2, done: 0, solved: false };
+    game.traps = [{ tx: ptx + 1, ty: pty, hit: false }, { tx: ptx + 2, ty: pty, hit: false }];
+  });
+  await page.waitForTimeout(200);
+  await page.evaluate(() => { window.__sh.game.player.x += 36; });
+  await page.waitForTimeout(350);
+  assert.match(await toast(), /CLICK\. No dart\. INCIDENT #1 OF 2/);
+  assert.match(await quest(), /incidents 1 \/ 2/);
+  await shot('06-trap-counter');
+  step('stepping on a dartless trap files an incident');
+
+  await page.evaluate(() => { window.__sh.game.player.x += 36; });
+  await page.waitForTimeout(350);
+  assert.match(await toast(), /INCIDENT QUOTA MET \(2\/2\)/);
+  assert.equal(await page.evaluate(() => window.__sh.game.puzzle.solved), true);
+  step('the quota opens the seal');
+
+  // ---------- customs: AT the door, daylight after ----------
+  await page.evaluate(() => {
+    const { game } = window.__sh;
+    game.runStats.goldGained = 12;
+    const T = 36;
+    for (let i = 0; i < game.world.map.length; i++) if (game.world.map[i] === 13) {  // TL.SU
+      game.player.x = (i % game.world.w) * T + T / 2;
+      game.player.y = ((i / game.world.w) | 0) * T + T / 2;
+      game.player.tk = 'stale';
+      break;
+    }
+  });
+  await page.waitForTimeout(400);
+  assert.deepEqual(await G(), { zone: 'tomb', state: 2, floor: 1 },
+    'inspection happens at the door, not in daylight');
+  assert.match(await dlgText(), /HALT\. Customs.*exactly 12 gold/);
+  await shot('07-customs-at-the-door');
+  step('customs plays in the tomb, not over the overworld');
+
+  await page.mouse.click(500, 120); await page.waitForTimeout(250);
+  await page.mouse.click(500, 120); await page.waitForTimeout(350);
+  assert.equal(await dlgText(), 'Anything to declare?');
+
+  // the little book is a peek, not an answer
+  await page.getByText('Read his little book').click();
+  await page.waitForTimeout(250);
+  assert.match(await dlgText(), /They are all about you/);
+  await page.mouse.click(500, 120); await page.waitForTimeout(350);
+  assert.equal(await dlgText(), 'Anything to declare?');
+  assert.equal((await G()).zone, 'tomb', 'reading the book does not skip customs');
+  step('the suspicion book returns to the question');
+
+  await page.getByText('Declare it').click();
+  await page.waitForTimeout(300);
+  assert.match(await dlgText(), /Declared: 12 g/);
+  assert.equal((await G()).zone, 'tomb');
+  await page.mouse.click(500, 120); await page.waitForTimeout(500);
+  assert.deepEqual(await G(), { zone: 'ow', state: 1, floor: 0 });
+  assert.match(await toast(), /Daylight\. Depth record: 1\. Run grade: [SABCDF]/);
+  await shot('08-daylight-after-customs');
+  step('declaring releases you into daylight, graded');
+
+  assert.deepEqual(pageErrors, [], 'no uncaught page errors');
+  console.log(`\ne2e: all ${steps} steps passed. screenshots in tests/e2e/shots/`);
+} catch (err) {
+  await shot('99-failure');
+  console.error('\ne2e FAILED at step ' + (steps + 1) + ' — see tests/e2e/shots/99-failure.png');
+  if (pageErrors.length) console.error('page errors:', pageErrors);
+  throw err;
+} finally {
+  await browser.close();
+  server.close();
+}

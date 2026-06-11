@@ -70,3 +70,23 @@ test('non-scarab kills do not touch the quest', () => {
   hitEnemy(game, mkEnemy('jackal', 0, 0), 99, 0, 0, fx);
   assert.equal(game.quest.kills, 0);
 });
+
+test('the first Front Office kill of a run is a Local 206 member; only the first', () => {
+  const game = blankGame(), fx = spyFx();
+  game.zone = 'tomb'; game.floorNum = 2;
+  hitEnemy(game, mkEnemy('jackal', 0, 0), 99, 0, 0, fx);
+  assert.ok(fx.calls.some(c => c[0] === 'toast' && /Local 206/.test(c[1])));
+  hitEnemy(game, mkEnemy('jackal', 0, 0), 99, 0, 0, fx);
+  assert.equal(fx.calls.filter(c => c[0] === 'toast' && /Local 206/.test(c[1])).length, 1);
+
+  // below the Front Office, the dead are non-union
+  const game2 = blankGame(), fx2 = spyFx();
+  game2.zone = 'tomb'; game2.floorNum = 5;
+  hitEnemy(game2, mkEnemy('jackal', 0, 0), 99, 0, 0, fx2);
+  assert.ok(!fx2.calls.some(c => c[0] === 'toast' && /Local 206/.test(c[1])));
+
+  // and the overworld is a certified Safe Workplace
+  const game3 = blankGame(), fx3 = spyFx();
+  hitEnemy(game3, mkEnemy('scarab', 0, 0), 99, 0, 0, fx3);
+  assert.ok(!fx3.calls.some(c => c[0] === 'toast' && /Local 206/.test(c[1])));
+});

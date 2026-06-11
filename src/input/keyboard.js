@@ -1,10 +1,10 @@
-// Keyboard: WASD/arrows to move, space/J/E to attack-or-confirm, K for potion.
+// Keyboard: WASD/arrows to move, space/J/E/Enter to attack-or-confirm, K for potion.
 
 export function makeKeyboard({ onConfirm, onPotion }) {
   const keys = {};
   window.addEventListener('keydown', e => {
     keys[e.key.toLowerCase()] = true;
-    if (e.key === ' ' || e.key.toLowerCase() === 'j' || e.key.toLowerCase() === 'e') onConfirm();
+    if (e.key === ' ' || e.key === 'Enter' || e.key.toLowerCase() === 'j' || e.key.toLowerCase() === 'e') onConfirm();
     if (e.key.toLowerCase() === 'k') onPotion();
   });
   window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });

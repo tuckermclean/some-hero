@@ -62,10 +62,14 @@ test('credentialed entry: stamp ceremony exactly once, then routine', () => {
   grantBackstory(game.meta); grantDebt(game.meta);
 
   standOnTrapdoor(game);
-  assert.equal(handleStairs(game, fx), true);
-  assert.equal(game.zone, 'tomb');
+  // the ceremony plays out BEFORE the descent — the screen must not give
+  // the verdict away by going dark while the golem is still verifying
+  assert.equal(handleStairs(game, fx), false);
+  assert.equal(game.zone, 'ow', 'still topside during the stamp ceremony');
   assert.equal(fx.count('onGolemApproval'), 1);
   assert.equal(game.meta.golemApproved, true);
+  fx.last('onGolemApproval')[1]();   // the dialog closes; entry proceeds
+  assert.equal(game.zone, 'tomb');
 
   // back out and in again: no second ceremony
   exitTomb(game, fx);
@@ -95,6 +99,11 @@ test('surfacing with dungeon gold triggers customs; dying does not', async () =>
   exitTomb(game, fx);
   assert.equal(fx.count('onGolemCustoms'), 1);
   assert.equal(fx.last('onGolemCustoms')[1], 12);
+  // inspection happens AT the door: no daylight until customs resolves
+  assert.equal(game.zone, 'tomb', 'still at the door during inspection');
+  fx.last('onGolemCustoms')[2]();    // customs concludes; released topside
+  assert.equal(game.zone, 'ow');
+  assert.match(fx.last('toast')[1], /Daylight/);
 
   // death is a customs exemption (the body bin has diplomatic status)
   const game2 = seededGame(22), fx2 = spyFx();

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T } from '../src/constants.js';
-import { stairsOpen, sealMsg, checkPlates, updateTorches, igniteBraziers } from '../src/systems/puzzles.js';
+import { stairsOpen, sealMsg, checkPlates, checkTraps, updateTorches, igniteBraziers } from '../src/systems/puzzles.js';
 import { blankGame, spyFx } from './helpers.js';
 
 test('stairsOpen for each seal type', () => {
@@ -26,6 +26,11 @@ test('stairsOpen for each seal type', () => {
   assert.equal(stairsOpen(game), false);
   game.puzzle.solved = true;
   assert.equal(stairsOpen(game), true);
+
+  game.puzzle = { type: 'traps', need: 3, done: 0, solved: false };
+  assert.equal(stairsOpen(game), false);
+  game.puzzle.solved = true;
+  assert.equal(stairsOpen(game), true);
 });
 
 test('sealMsg names each seal', () => {
@@ -33,6 +38,40 @@ test('sealMsg names each seal', () => {
   assert.match(sealMsg({ type: 'key' }), /bronze key/);
   assert.match(sealMsg({ type: 'plates', done: 1, need: 2 }), /1\/2/);
   assert.match(sealMsg({ type: 'torch', n: 3 }), /3 braziers/);
+  assert.match(sealMsg({ type: 'traps', done: 1, need: 4 }), /1\/4/);
+  assert.match(sealMsg({ type: 'traps', done: 1, need: 4 }), /Step on them/);
+});
+
+test('checkTraps fires each trap once, counts incidents, and opens at the quota', () => {
+  const game = blankGame(), fx = spyFx();
+  game.puzzle = { type: 'traps', need: 2, done: 0, solved: false };
+  const ptx = Math.floor(game.player.x / T), pty = Math.floor(game.player.y / T);
+  game.traps = [{ tx: ptx, ty: pty, hit: false }, { tx: ptx + 3, ty: pty, hit: false }];
+
+  checkTraps(game, fx);
+  assert.equal(game.puzzle.done, 1);
+  assert.equal(game.traps[0].hit, true);
+  assert.equal(game.puzzle.solved, false);
+  assert.match(fx.last('toast')[1], /INCIDENT #1 OF 2/);
+  assert.equal(fx.last('sfx')[1], 'click');
+
+  // standing on a fired trap does not double-count
+  checkTraps(game, fx);
+  assert.equal(game.puzzle.done, 1);
+
+  // the second trap meets the quota and opens the seal
+  game.player.x = (ptx + 3) * T + T / 2;
+  checkTraps(game, fx);
+  assert.equal(game.puzzle.done, 2);
+  assert.equal(game.puzzle.solved, true);
+  assert.equal(stairsOpen(game), true);
+  assert.match(fx.last('toast')[1], /INCIDENT QUOTA MET/);
+  assert.ok(fx.calls.some(c => c[0] === 'sfx' && c[1] === 'level'));
+
+  // solved is latched; nothing more fires
+  const before = fx.calls.length;
+  checkTraps(game, fx);
+  assert.equal(fx.calls.length, before);
 });
 
 test('checkPlates counts covered plates and solves when all covered', () => {

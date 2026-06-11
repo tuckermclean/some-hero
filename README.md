@@ -4,16 +4,25 @@
 **"Somebody has to. Apparently it's you."**
 
 A playable vertical slice of the SOME HERO design doc, built by gutting the
-Amulet of the Sands atomic engine. Covers Build Order v2 steps 1–3 plus both
+Amulet of the Sands atomic engine. Covers Build Order v2 steps 1–5 plus both
 engine prerequisites. The desert art is placeholder; the *systems* and the
 *voice* are the deliverable.
 
 ## Run / test
 
 ```
-npm start    # any static server works
-npm test     # 115 tests, zero dependencies, node --test
+npm start         # any static server works
+npm test          # 144 unit tests, zero runtime dependencies, node --test
+npm run test:e2e  # drives the real game in headless Chromium (Playwright dev-dep;
+                  # uses $CHROME_PATH, /usr/bin/chromium, or Playwright's download)
 ```
+
+The e2e suite (`tests/e2e/game.e2e.mjs`) covers the seams unit tests can't:
+the splash timeline and the Ledger's key reactions, Enter-to-start, the Door
+Golem's stamp ceremony playing *topside* before descent, the trap-counter
+room, and customs happening *at the door* before daylight. It screenshots
+each beat into `tests/e2e/shots/`. The game exposes its state for the test
+only when loaded with `?test`.
 
 ## What's implemented (mapped to the design doc)
 

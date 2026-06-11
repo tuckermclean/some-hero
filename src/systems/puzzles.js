@@ -1,7 +1,9 @@
-// The tomb's seal puzzles: warden, bronze key, pressure plates, braziers.
+// The tomb's seal puzzles: warden, bronze key, pressure plates, braziers,
+// and the Room That Renovation Forgot (legacy traps, incident counter).
 
 import { T } from '../constants.js';
 import { burst } from '../entities/particles.js';
+import { ledgerize } from './ledger.js';
 
 /** May the player take the down-stairs on this floor? */
 export function stairsOpen(game) {
@@ -18,6 +20,8 @@ export function sealMsg(puzzle) {
   if (puzzle.type === 'key') return 'Sealed. A bronze key lies on this floor.';
   if (puzzle.type === 'plates') return 'Sealed. Push the blocks onto the glowing plates (' + puzzle.done + '/' + puzzle.need + ').';
   if (puzzle.type === 'riddle') return 'Sealed. The door has a question. The door has been waiting.';
+  if (puzzle.type === 'traps') return 'Sealed. INCIDENT COUNTER: ' + puzzle.done + '/' + puzzle.need +
+    '. The traps ran out of darts years ago. Nobody told the counter. Step on them.';
   return 'Sealed. All ' + puzzle.n + ' braziers must burn at once.';
 }
 
@@ -35,6 +39,32 @@ export function checkPlates(game, fx) {
     pz.solved = true;
     fx.sfx('level');
     fx.toast('The stone seal grinds open!');
+  }
+}
+
+/**
+ * The Room That Renovation Forgot: fire any un-hit trap under the player.
+ * The traps have no darts left, but the incident counter still counts —
+ * the exit opens at exactly `need` triggers. Stepping ON them is the answer.
+ */
+export function checkTraps(game, fx) {
+  const pz = game.puzzle;
+  if (!pz || pz.type !== 'traps' || pz.solved) return;
+  const ptx = Math.floor(game.player.x / T), pty = Math.floor(game.player.y / T);
+  for (const tr of game.traps) {
+    if (tr.hit || tr.tx !== ptx || tr.ty !== pty) continue;
+    tr.hit = true;
+    pz.done++;
+    fx.sfx('click');
+    burst(game.parts, game.player.x, game.player.y - 6, 6, '#9a9486', game.rng);
+    if (pz.done >= pz.need) {
+      pz.solved = true;
+      fx.sfx('level');
+      fx.toast(ledgerize('INCIDENT QUOTA MET (' + pz.need + '/' + pz.need +
+        '). The seal opens, satisfied that safety has officially failed the required number of times.'));
+    } else {
+      fx.toast('CLICK. No dart. INCIDENT #' + pz.done + ' OF ' + pz.need + ' recorded anyway.');
+    }
   }
 }
 

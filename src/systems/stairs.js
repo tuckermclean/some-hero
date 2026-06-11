@@ -26,7 +26,10 @@ export function handleStairs(game, fx) {
       if (missing.length) { fx.onGolemEntry(missing); return false; }
       if (!game.meta.golemApproved) {
         game.meta.golemApproved = true;
-        fx.onGolemApproval();   // the stamp ceremony; do not cut the pause
+        // the stamp ceremony; do not cut the pause. Entry waits for the
+        // stamp — descending first would tell the player the verdict early.
+        fx.onGolemApproval(() => enterTomb(game, fx));
+        return false;
       }
       enterTomb(game, fx);
     }

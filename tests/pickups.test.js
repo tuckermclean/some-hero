@@ -76,3 +76,14 @@ test('amulet wins: stage 4, WIN state, trapdoor under the player, no immediate r
   assert.equal(game.player.tk, atx + ',' + aty);  // edge-trigger armed against retrigger
   assert.equal(fx.count('onAmuletFound'), 1);
 });
+
+test('the gap guestbook: one menace entry, the Ledger corrects the spelling', () => {
+  const game = blankGame(), fx = spyFx();
+  put(game, 'guestbook', 5);
+  updatePickups(game, 1 / 60, fx);
+  assert.equal(game.meta.menace.length, 1);
+  assert.match(game.meta.menace[0].deed, /guestbook/);
+  assert.match(fx.last('toast')[1], /minded it/);
+  assert.match(fx.last('toast')[1], /origenal/, 'the Ledger has corrected the spelling');
+  assert.equal(game.pickups.length, 0);
+});

@@ -117,6 +117,11 @@ export function lootLine(kind) {
   }[kind] || '');
 }
 
+/** Stratum I monsters are unionized. The union has a newsletter. */
+export function union206Line() {
+  return ledgerize('The deceased was a dues-paying member of Rattling Brotherhood Local 206. The union has been notified. The union has a newsletter.');
+}
+
 /** Fresh per-run stats. The riddle door and customs both read from this. */
 export function newRunStats() {
   return { depth: 0, kills: 0, died: false, killsByKind: {}, glurpsDrunk: 0, goldGained: 0 };

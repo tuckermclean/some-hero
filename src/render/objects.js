@@ -1,6 +1,32 @@
-// World object rendering: pushable blocks, braziers, pickups.
+// World object rendering: pushable blocks, braziers, legacy traps, pickups.
 
 import { T } from '../constants.js';
+
+export function drawTraps(ctx, game) {
+  for (const tr of game.traps) {
+    const x = tr.tx * T, y = tr.ty * T;
+    // a worn vent-plate; suspicious on purpose — the puzzle is realizing
+    // you should step on it, not finding it
+    ctx.fillStyle = tr.hit ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.07)';
+    ctx.fillRect(x + 4, y + 4, T - 8, T - 8);
+    ctx.strokeStyle = '#8a6a52'; ctx.lineWidth = 1;
+    ctx.strokeRect(x + 4.5, y + 4.5, T - 9, T - 9);
+    // dart holes (empty for years)
+    ctx.fillStyle = tr.hit ? 'rgba(0,0,0,.5)' : 'rgba(0,0,0,.4)';
+    for (const [dx, dy] of [[9, 9], [T - 9, 9], [9, T - 9], [T - 9, T - 9]]) {
+      ctx.beginPath(); ctx.arc(x + dx, y + dy, 1.6, 0, Math.PI * 2); ctx.fill();
+    }
+    if (tr.hit) {
+      // the incident counter's little tally tick
+      ctx.strokeStyle = '#f2a64b'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + T / 2 - 4, y + T / 2);
+      ctx.lineTo(x + T / 2 - 1, y + T / 2 + 4);
+      ctx.lineTo(x + T / 2 + 5, y + T / 2 - 5);
+      ctx.stroke();
+    }
+  }
+}
 
 export function drawBlocks(ctx, game) {
   for (const b of game.blocks) {
@@ -56,6 +82,20 @@ export function drawPickups(ctx, game) {
       ctx.strokeStyle = '#d8a93f'; ctx.lineWidth = 3; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.arc(p.x - 4, p.y, 4, 0, Math.PI * 2); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 9, p.y);
       ctx.moveTo(p.x + 6, p.y); ctx.lineTo(p.x + 6, p.y + 4); ctx.moveTo(p.x + 9, p.y); ctx.lineTo(p.x + 9, p.y + 4); ctx.stroke();
+    } else if (p.kind === 'guestbook') {
+      // the gap guestbook: an open book on a tiny pedestal
+      ctx.fillStyle = '#5a4a3c'; ctx.fillRect(p.x - 3, p.y + 4, 6, 5);
+      ctx.fillStyle = '#f6e7c8';
+      ctx.fillRect(p.x - 8, p.y - 4, 7, 9);
+      ctx.fillRect(p.x + 1, p.y - 4, 7, 9);
+      ctx.strokeStyle = '#5a4a3c'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y - 4); ctx.lineTo(p.x, p.y + 5); ctx.stroke();
+      ctx.strokeStyle = 'rgba(90,74,60,.5)';
+      ctx.beginPath();
+      ctx.moveTo(p.x - 6, p.y - 1); ctx.lineTo(p.x - 3, p.y - 1);
+      ctx.moveTo(p.x + 3, p.y - 1); ctx.lineTo(p.x + 6, p.y - 1);
+      ctx.moveTo(p.x - 6, p.y + 2); ctx.lineTo(p.x - 3, p.y + 2);
+      ctx.stroke();
     } else if (p.kind === 'maxheart') {
       ctx.strokeStyle = '#f2d27a'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); ctx.stroke();

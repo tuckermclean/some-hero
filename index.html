@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>SOME HERO</title>
 <link rel="stylesheet" href="styles/main.css">
+<link rel="stylesheet" href="styles/splash.css">
 </head>
 <body>
 <div id="wrap">
@@ -29,10 +30,21 @@
     <div id="dlgHint">tap to continue</div>
   </div>
 
-  <div class="ui" id="menu">
-    <h1><small style="display:block;font-size:.35em;letter-spacing:.4em;opacity:.8">SOME</small>HERO</h1>
-    <div class="sub">somebody has to. apparently it's you.</div>
-    <div class="tip pulse">TICKET #44,107 — ASSIGNED<br>(resurrection plan: standard, deductible applies)<br><br>drag the left side to walk. attack with the right.<br>report to Clerk Hespeth at the Guild Hall.<br><br>tap to begin</div>
+  <div id="splash">
+    <div class="torchlight"></div>
+    <canvas id="embers"></canvas>
+    <div class="vignette"></div>
+    <div class="version">v0.4.4107 — "should be quick"</div>
+    <main class="marquee">
+      <div class="eyebrow">The Kingdom of Greater Pflum Presents</div>
+      <span class="some">Some</span>
+      <span class="hero" aria-label="Hero">HERO</span>
+      <div class="stamp" id="splashStamp">TICKET #44,107 — ASSIGNED<small>resurrection plan: standard (deductible applies)</small></div>
+      <div class="tagline">Somebody has to. Apparently it's you.</div>
+      <div class="press" id="splashPress">— PRESS ANY KEY —</div>
+    </main>
+    <div class="ledger-note" id="splashLedger">our hero gazed upon the title screen. heroicly. for ages.<br><em>— the Ledger</em></div>
+    <div class="sponsor">presented by GLURP™ brand adventure fluid<br><span class="fine">now with fewer eels! (glurp will not fix you)</span></div>
   </div>
 
   <div class="ui hidden" id="over">

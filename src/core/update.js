@@ -5,7 +5,7 @@ import { ST } from '../constants.js';
 import { movePlayer, tickTimers } from '../systems/movement.js';
 import { handleStairs } from '../systems/stairs.js';
 import { tryPushBlock, settleBlocks } from '../systems/blocks.js';
-import { updateTorches } from '../systems/puzzles.js';
+import { updateTorches, checkTraps } from '../systems/puzzles.js';
 import { tombQuestLine } from '../systems/quest.js';
 import { nearestNpc } from '../entities/npc.js';
 import { playerAttack } from '../systems/attack.js';
@@ -34,6 +34,7 @@ export function updateGame(game, controls, dt, view, fx) {
   tryPushBlock(game, controls.mx, controls.my, m, fx);
   settleBlocks(game.blocks, dt);
   updateTorches(game, dt, fx);
+  checkTraps(game, fx);
 
   if (game.zone === 'tomb') fx.setQuestHTML(tombQuestLine(game));
 

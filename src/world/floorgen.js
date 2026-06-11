@@ -21,7 +21,7 @@ export function generateFloor(f, h2, rng = Math.random, pinned = []) {
   const w = TOMB.W, h = TOMB.H;
   const map = new Uint8Array(w * h).fill(TL.TW);
   const world = { map, w, h, h2 };
-  const enemies = [], pickups = [], blocks = [], plates = [], torches = [];
+  const enemies = [], pickups = [], blocks = [], plates = [], torches = [], traps = [];
   let boss = null, puzzle = null;
 
   // ---- carve rooms + sequential L-corridors ----
@@ -38,7 +38,14 @@ export function generateFloor(f, h2, rng = Math.random, pinned = []) {
   for (const spec of pinned) {
     const rw = Math.max(3, Math.min(spec.w || 5, w - 6));
     const rh = Math.max(3, Math.min(spec.h || 4, h - 6));
-    const x = 2 + (rng() * (w - rw - 4) | 0), y = 2 + (rng() * (h - rh - 4) | 0);
+    // stairs only ever go on room centres, so a pinned room must never cover
+    // one — reject placements that do (rooms already holds earlier pinned
+    // rooms too, which keeps their story content from stacking)
+    let x = 2, y = 2;
+    for (let t = 0; t < 80; t++) {
+      x = 2 + (rng() * (w - rw - 4) | 0); y = 2 + (rng() * (h - rh - 4) | 0);
+      if (!rooms.some(r => r.cx >= x && r.cx < x + rw && r.cy >= y && r.cy < y + rh)) break;
+    }
     const room = { x, y, w: rw, h: rh, cx: x + (rw >> 1), cy: y + (rh >> 1), tag: spec.tag };
     rooms.push(room);
     pinnedRooms.push(room);
@@ -79,10 +86,25 @@ export function generateFloor(f, h2, rng = Math.random, pinned = []) {
     const s = wardenStats(f);
     boss = mkBoss(exitR.cx * T, (exitR.cy - 1) * T, s);
   } else {
-    const types = ['key', 'plates', 'torch', 'riddle'];
-    const ty = types[(rng() * 4) | 0];
+    const types = ['key', 'plates', 'torch', 'riddle', 'traps'];
+    const ty = types[(rng() * types.length) | 0];
     if (ty === 'riddle') {
       puzzle = { type: 'riddle', solved: false, attempts: 0 };
+    } else if (ty === 'traps') {
+      // the Room That Renovation Forgot: legacy traps with no darts left,
+      // but the incident counter still counts. Exit opens at exactly N.
+      const need = 3 + ((rng() * 3) | 0) + Math.min(2, f >> 2);
+      puzzle = { type: 'traps', need, done: 0, solved: false };
+      let placed = 0, guard = 0;
+      while (placed < need && guard++ < 80) {
+        const r = pickRoom(), s = freeSpotIn(r);
+        if (map[s.ty * w + s.tx] !== TL.TF) continue;
+        if (traps.some(o => o.tx === s.tx && o.ty === s.ty)) continue;
+        traps.push({ tx: s.tx, ty: s.ty, hit: false });
+        placed++;
+      }
+      puzzle.need = traps.length;
+      if (!traps.length) puzzle = { type: 'key', have: true };  // degenerate fallback: open
     } else if (ty === 'key') {
       puzzle = { type: 'key', have: false };
       const r = pickRoom(), s = freeSpotIn(r);
@@ -147,8 +169,12 @@ export function generateFloor(f, h2, rng = Math.random, pinned = []) {
       // insane contents.
       pickups.push({ kind: 'potion', x: r.cx * T + T / 2, y: r.cy * T + T / 2, v: 1 });
     }
+    if (r.tag === 'gap') {
+      // MIND THE GAP. The gap has a guestbook. Sign it.
+      pickups.push({ kind: 'guestbook', x: r.cx * T + T / 2, y: r.cy * T + T / 2, v: 1 });
+    }
   }
 
-  return { world, enemies, pickups, blocks, plates, torches, puzzle, boss,
+  return { world, enemies, pickups, blocks, plates, torches, traps, puzzle, boss,
            spawn: { cx: spawn.cx, cy: spawn.cy }, pinnedRooms };
 }

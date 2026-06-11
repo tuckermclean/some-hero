@@ -4,15 +4,18 @@ import { T } from '../constants.js';
 import { generateFloor } from './floorgen.js';
 import { startRun, recordDepth } from '../core/meta.js';
 import { newRunStats, gradeRun, gradeRemark } from '../systems/ledger.js';
+import { floorLine } from '../content/floors.js';
 
 /** Apply a generated floor to the game and place the player on the up-stairs. */
 export function applyFloor(game, f) {
-  const g = generateFloor(f, game.world.h2, game.rng,
-    [{ w: 5, h: 4, tag: 'breakroom' }]);  // load-bearing room: the imp break area
+  // load-bearing rooms the renovation imps can't move
+  const pins = [{ w: 5, h: 4, tag: 'breakroom' }];   // the imp break area
+  if (f === 3) pins.push({ w: 4, h: 3, tag: 'gap' }); // MIND THE GAP (guestbook inside)
+  const g = generateFloor(f, game.world.h2, game.rng, pins);
   game.world = g.world;
   game.enemies = g.enemies; game.pickups = g.pickups; game.parts = [];
   game.blocks = g.blocks; game.plates = g.plates; game.torches = g.torches;
-  game.puzzle = g.puzzle; game.boss = g.boss;
+  game.traps = g.traps; game.puzzle = g.puzzle; game.boss = g.boss;
   game.player.x = g.spawn.cx * T + T / 2;
   game.player.y = g.spawn.cy * T + T / 2;
   game.player.tk = g.spawn.cx + ',' + g.spawn.cy;
@@ -24,9 +27,7 @@ export function descend(game, fx) {
   game.deepest = Math.max(game.deepest, game.floorNum);
   game.runStats.depth = Math.max(game.runStats.depth, game.floorNum);
   applyFloor(game, game.floorNum);
-  fx.toast(game.floorNum % 4 === 0
-    ? 'Floor ' + game.floorNum + ' — performance review approaching.'
-    : 'Floor ' + game.floorNum);
+  fx.toast(floorLine(game.floorNum));
   if (game.floorNum % 4 === 0) fx.sfx('boss');
 }
 
@@ -48,21 +49,25 @@ export function enterTomb(game, fx) {
 
 /** Climb out of floor 1 back into the saved overworld. */
 export function exitTomb(game, fx) {
-  const s = game.owSave;
-  game.world = s.world;
-  game.enemies = s.enemies; game.pickups = s.pickups; game.npcs = s.npcs; game.boss = s.boss;
-  game.player.x = s.x; game.player.y = s.y;
-  game.player.tk = Math.floor(s.x / T) + ',' + Math.floor(s.y / T);
-  game.blocks = []; game.plates = []; game.torches = []; game.puzzle = null; game.parts = [];
-  game.zone = 'ow';
-  game.floorNum = 0;
-  // the Ledger grades the run BEFORE recording the depth, so a personal best
-  // counts in your favor exactly once
-  const grade = gradeRun(game.meta, { ...game.runStats, died: false });
-  game.meta.grades.push(grade);
-  recordDepth(game.meta, game.deepest);
-  fx.toast('Daylight. Depth record: ' + game.deepest + '. Run grade: ' + grade + '. ' + gradeRemark(grade));
-  fx.questChanged();
-  // customs: the Door Golem would like a word about that gold
-  if (game.runStats.goldGained > 0) fx.onGolemCustoms(game.runStats.goldGained);
+  const surface = () => {
+    const s = game.owSave;
+    game.world = s.world;
+    game.enemies = s.enemies; game.pickups = s.pickups; game.npcs = s.npcs; game.boss = s.boss;
+    game.player.x = s.x; game.player.y = s.y;
+    game.player.tk = Math.floor(s.x / T) + ',' + Math.floor(s.y / T);
+    game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.puzzle = null; game.parts = [];
+    game.zone = 'ow';
+    game.floorNum = 0;
+    // the Ledger grades the run BEFORE recording the depth, so a personal best
+    // counts in your favor exactly once
+    const grade = gradeRun(game.meta, { ...game.runStats, died: false });
+    game.meta.grades.push(grade);
+    recordDepth(game.meta, game.deepest);
+    fx.toast('Daylight. Depth record: ' + game.deepest + '. Run grade: ' + grade + '. ' + gradeRemark(grade));
+    fx.questChanged();
+  };
+  // customs: the Door Golem would like a word about that gold — AT the door,
+  // before you see daylight, so the inspection happens where inspections happen
+  if (game.runStats.goldGained > 0) fx.onGolemCustoms(game.runStats.goldGained, surface);
+  else surface();
 }

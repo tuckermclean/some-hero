@@ -85,10 +85,39 @@ test('non-warden floors have a consistent puzzle structure', () => {
       assert.equal(g.puzzle.attempts, 0);
       assert.equal(g.plates.length, 0);
       assert.equal(g.torches.length, 0);
+    } else if (g.puzzle.type === 'traps') {
+      assert.equal(g.puzzle.need, g.traps.length);
+      assert.ok(g.traps.length >= 1);
+      assert.ok(g.traps.every(t => !t.hit));
+      assert.equal(g.puzzle.done, 0);
+      assert.equal(g.puzzle.solved, false);
+      // traps sit on plain walkable floor
+      for (const t of g.traps) assert.equal(g.world.map[t.ty * g.world.w + t.tx], TL.TF);
     } else {
       assert.fail('unexpected puzzle type ' + g.puzzle.type);
     }
   }
+});
+
+test('the gap room pin yields a guestbook inside its bounds', () => {
+  for (let seed = 1; seed <= 10; seed++) {
+    const g = generateFloor(3, h2, mulberry32(seed), [{ w: 4, h: 3, tag: 'gap' }]);
+    const r = g.pinnedRooms[0];
+    const T = 36;
+    const inRoom = p =>
+      p.x >= r.x * T && p.x < (r.x + r.w) * T && p.y >= r.y * T && p.y < (r.y + r.h) * T;
+    assert.ok(g.pickups.some(p => p.kind === 'guestbook' && inRoom(p)),
+      `seed ${seed}: no guestbook in the gap room`);
+  }
+});
+
+test('the incident quota differs between runs (different N, same rule forever)', () => {
+  const needs = new Set();
+  for (let seed = 1; seed <= 60; seed++) {
+    const g = generateFloor(3, h2, mulberry32(seed));
+    if (g.puzzle.type === 'traps') needs.add(g.puzzle.need);
+  }
+  assert.ok(needs.size > 1, 'expected varied incident quotas, got ' + [...needs]);
 });
 
 test('enemy stats scale with floor depth', () => {

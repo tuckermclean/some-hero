@@ -1,9 +1,9 @@
-// Full-screen overlays: title menu, death screen, win screen.
+// Full-screen overlays: death screen, win screen. (The title is the
+// splash — see ui/splash.js.)
 
 export function makeScreens(els) {
-  const { menu, over, overTitle, overSub, overTip } = els;
+  const { over, overTitle, overSub, overTip } = els;
   return {
-    hideMenu() { menu.classList.add('hidden'); },
     hideOver() { over.classList.remove('hidden'); over.classList.add('hidden'); },
     showIncidentReport(report, grade, hespeth) {
       overTitle.textContent = 'INCIDENT REPORT';
