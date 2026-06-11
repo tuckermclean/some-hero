@@ -120,6 +120,23 @@ test('the incident quota differs between runs (different N, same rule forever)',
   assert.ok(needs.size > 1, 'expected varied incident quotas, got ' + [...needs]);
 });
 
+test('forceSeal overrides the seal type, including warden floors', () => {
+  for (const t of ['key', 'plates', 'torch', 'riddle', 'traps']) {
+    assert.equal(generateFloor(1, h2, mulberry32(7), [], { forceSeal: t }).puzzle.type, t, t + ' on floor 1');
+    assert.equal(generateFloor(4, h2, mulberry32(7), [], { forceSeal: t }).puzzle.type, t, t + ' overrides the warden');
+  }
+  const w = generateFloor(2, h2, mulberry32(7), [], { forceSeal: 'warden' });
+  assert.equal(w.puzzle.type, 'warden');
+  assert.ok(w.boss, 'a forced warden brings the boss');
+});
+
+test('absent or bogus forceSeal changes nothing (rng stream intact)', () => {
+  const plain = generateFloor(3, h2, mulberry32(9));
+  const bogus = generateFloor(3, h2, mulberry32(9), [], { forceSeal: 'nonsense' });
+  assert.equal(bogus.puzzle.type, plain.puzzle.type);
+  assert.deepEqual(bogus.world.map, plain.world.map);
+});
+
 test('enemy stats scale with floor depth', () => {
   const g1 = generateFloor(1, h2, mulberry32(2));
   const g9 = generateFloor(9, h2, mulberry32(2));

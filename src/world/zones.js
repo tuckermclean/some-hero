@@ -6,12 +6,25 @@ import { startRun, recordDepth } from '../core/meta.js';
 import { newRunStats, gradeRun, gradeRemark } from '../systems/ledger.js';
 import { floorLine } from '../content/floors.js';
 
+/** Restore the stashed overworld exactly (no grading, no customs — just the
+ *  world swap). The single source of truth for climbing out. */
+export function restoreSurface(game) {
+  const s = game.owSave;
+  game.world = s.world;
+  game.enemies = s.enemies; game.pickups = s.pickups; game.npcs = s.npcs; game.boss = s.boss;
+  game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.puzzle = null;
+  game.parts = [];
+  game.zone = 'ow';
+  game.floorNum = 0;
+}
+
 /** Apply a generated floor to the game and place the player on the up-stairs. */
 export function applyFloor(game, f) {
   // load-bearing rooms the renovation imps can't move
   const pins = [{ w: 5, h: 4, tag: 'breakroom' }];   // the imp break area
   if (f === 3) pins.push({ w: 4, h: 3, tag: 'gap' }); // MIND THE GAP (guestbook inside)
-  const g = generateFloor(f, game.world.h2, game.rng, pins);
+  const g = generateFloor(f, game.world.h2, game.rng, pins,
+    { forceSeal: game.debug && game.debug.forceSeal });
   game.world = g.world;
   game.enemies = g.enemies; game.pickups = g.pickups; game.parts = [];
   game.blocks = g.blocks; game.plates = g.plates; game.torches = g.torches;
@@ -51,13 +64,9 @@ export function enterTomb(game, fx) {
 export function exitTomb(game, fx) {
   const surface = () => {
     const s = game.owSave;
-    game.world = s.world;
-    game.enemies = s.enemies; game.pickups = s.pickups; game.npcs = s.npcs; game.boss = s.boss;
     game.player.x = s.x; game.player.y = s.y;
     game.player.tk = Math.floor(s.x / T) + ',' + Math.floor(s.y / T);
-    game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.puzzle = null; game.parts = [];
-    game.zone = 'ow';
-    game.floorNum = 0;
+    restoreSurface(game);
     // the Ledger grades the run BEFORE recording the depth, so a personal best
     // counts in your favor exactly once
     const grade = gradeRun(game.meta, { ...game.runStats, died: false });

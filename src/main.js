@@ -22,6 +22,8 @@ import { hespethLine, resurrectionNote } from './content/hespeth.js';
 import { entryLines, approvalLines, customsIntro, declareOutcome, smuggleOutcome, suspicionBook } from './content/golem.js';
 import { nextRiddle, answerRiddle, doorSigh } from './systems/riddle.js';
 import { render } from './render/index.js';
+import { SKINS, DEFAULT_SKIN } from './render/skins/index.js';
+import { makeCheats } from './ui/cheats.js';
 
 // ---------- DOM ----------
 const $ = id => document.getElementById(id);
@@ -50,6 +52,18 @@ resize();
 
 // ---------- game + UI ----------
 const game = createGame();
+
+// skin: game.skin drives the canvas, a body class drives the CSS vars
+function setSkin(name) {
+  if (!SKINS[name]) name = DEFAULT_SKIN;
+  game.skin = name;
+  document.body.className = document.body.className.replace(/\bskin-\S+/g, '').trim();
+  document.body.classList.add('skin-' + name);
+  try { localStorage.setItem('sh-skin', name); } catch (e) { /* private mode */ }
+}
+let savedSkin = null;
+try { savedSkin = localStorage.getItem('sh-skin'); } catch (e) { /* private mode */ }
+setSkin(savedSkin || DEFAULT_SKIN);
 const hud = makeHud(els);
 const toast = makeToast(els.toast);
 const screens = makeScreens(els);
@@ -111,6 +125,14 @@ const fx = makeEffects({
   onRiddle: () => askTheDoor()
 });
 
+// ---------- playtest cheats (?cheats or ?test; backtick toggles) ----------
+const q = new URLSearchParams(location.search);
+const cheats = (q.has('cheats') || q.has('test'))
+  ? makeCheats(game, fx, {
+      skins: { list: () => Object.keys(SKINS), get: () => game.skin, set: setSkin }
+    })
+  : null;
+
 function askTheDoor() {
   const r = nextRiddle(game);
   dialog.say('The Door', [r.q], () => {});
@@ -144,6 +166,11 @@ const kb = makeKeyboard({
 // every key on the splash goes to the Ledger; only Enter starts
 window.addEventListener('keydown', e => { if (game.state === ST.MENU) splash.key(e); });
 
+// backtick toggles the cheat panel (never on the splash — the Ledger would notice)
+window.addEventListener('keydown', e => {
+  if (e.key === '`' && cheats && game.state !== ST.MENU) cheats.toggle();
+});
+
 let pendingDeath = null;
 window.addEventListener('pointerdown', e => {
   if (game.state === ST.MENU) { splash.pointer(e); return; }
@@ -175,6 +202,7 @@ function startGame() {
   game.state = ST.PLAY;
   screens.closeOver();
   hud.show();
+  if (cheats) cheats.button.style.display = 'flex';
   fx.hudChanged();
   fx.questChanged();
 }

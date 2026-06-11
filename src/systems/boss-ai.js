@@ -14,7 +14,7 @@ export function updateBoss(game, dt, fx) {
   if (b.state === 'sleep') {
     if (dist < 170) {
       b.state = 'idle'; b.timer = 1; fx.sfx('boss');
-      fx.toast('"Let\'s circle back." — and he means it physically.');
+      if (b.telegraph) fx.toast(b.telegraph);
     }
   } else if (b.state === 'idle') {
     b.timer -= dt;
@@ -36,5 +36,5 @@ export function updateBoss(game, dt, fx) {
     }
   }
 
-  if (dist < (b.w + p.w) / 2) hurtPlayer(game, b.dmg, fx, 'the Middle Manager');
+  if (dist < (b.w + p.w) / 2) hurtPlayer(game, b.dmg, fx, b.name);
 }

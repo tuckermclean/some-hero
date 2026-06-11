@@ -13,7 +13,7 @@ export function makeScreens(els) {
     },
     showWin() {
       overTitle.textContent = '✦ TICKET #44,107: STAMPED ✦';
-      overSub.textContent = '…and beneath the Middle Manager\u2019s desk, stairs grind open. The Downstairs awaits.';
+      overSub.textContent = 'The Commemorative Medallion is yours. ("It’s a PROP!") …and at center stage of the Victory Site, a trapdoor grinds open. The Downstairs awaits.';
       overTip.textContent = 'tap — then descend. NOW LEAVING: SAFETY.';
       over.classList.remove('hidden');
     },

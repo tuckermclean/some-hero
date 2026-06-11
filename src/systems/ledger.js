@@ -24,6 +24,49 @@ export function ledgerize(text) {
 
 // ---- incident reports ----
 const CAUSE_REPORTS = {
+  // ---- the Front Office ----
+  skeleton: [
+    'Cause of death: skeleton. Contributing factor: hubris. Recommended action: less hubris.',
+    'Deceased was outperformed by a member of Local 206. The union has filed this under wins.',
+    'Cause of death: skeleton. He was on break. He clocked back in for you.'
+  ],
+  mailbat: [
+    'Cause of death: mailbat. The memo was marked URGENT. So, it turns out, was the mailbat.',
+    'Employee failed to sign for a delivery. Delivery insisted.',
+    'Cause of death: mailbat. Return to sender was not an option. You were the address.'
+  ],
+  consultant: [
+    'Cause of death: consultant. Walls are for employees. It is not an employee. It billed for the hour anyway.',
+    'Employee was restructured. The consultant has identified further efficiencies.',
+    'Cause of death: consultant. Invoice attached. The invoice is also attached to you.'
+  ],
+  cabinet: [
+    'Cause of death: filing cabinet. Employee has been filed. Under H, for hubris.',
+    'Deceased attempted to open archival furniture. The furniture exercised its right to refuse.',
+    'Cause of death: cabinet. Per the cabinet: this meeting could have been left closed.'
+  ],
+  // ---- Greater Pflum ----
+  pigeon: [
+    'Cause of death: pigeons. Plural. They remember faces, and you started it.',
+    'Employee initiated hostilities with a bird. The bird had references.',
+    'Cause of death: pigeon. The Safe Workplace banner has been updated. It now has an asterisk.'
+  ],
+  goose: [
+    'Cause of death: goose. The kingdom is a certified Safe Workplace. The goose is not certified anything.',
+    'Employee was warned about the goose. By the goose. Repeatedly. At volume.',
+    'Cause of death: goose. Recommended action: there is none. It is a goose.'
+  ],
+  veteran: [
+    'Cause of death: veteran. The war ended forty years ago. Someone should tell them. Not you. You tried.',
+    'Deceased was mistaken for Malgrath. Posthumous correction filed. Veteran unconvinced.',
+    'Cause of death: veteran. They held the line. The line was where you were standing.'
+  ],
+  'the Reenactor': [
+    'Cause of death: the Reenactor. Historically accurate. He checked.',
+    'Employee participated in a reenactment. The role of the casualty was played by the employee. Rave reviews.',
+    'Cause of death: the Famous Charge, performed daily at noon. Admission was free. It cost everything.'
+  ],
+  // ---- the retired desert roster (the Ledger never forgets a cause) ----
   scarab: [
     'Cause of death: scarab. Contributing factor: hubris. Recommended action: less hubris.',
     'Employee was outmaneuvered by a beetle. The beetle has been promoted.',
@@ -80,12 +123,14 @@ const GRADES = ['F', 'D', 'C', 'B', 'A', 'S'];
  *  - +1 for 10+ kills
  *  - -1 for dying at all; a further -1 for dying to the same thing as last time
  *  - surviving (exited on foot) +1
+ *  - -1 for harming the intern. The rubric is never shown. This is the rubric.
  */
 export function gradeRun(meta, run) {
   let g = 2; // C
   g += Math.floor(run.depth / 3);
   if (run.depth > 0 && run.depth >= meta.bestDepth) g++;
   if (run.kills >= 10) g++;
+  if (run.killsByKind && run.killsByKind.slime) g--;
   if (run.died) {
     g--;
     if (meta.repeatCause >= 1) g--;
@@ -120,6 +165,11 @@ export function lootLine(kind) {
 /** Stratum I monsters are unionized. The union has a newsletter. */
 export function union206Line() {
   return ledgerize('The deceased was a dues-paying member of Rattling Brotherhood Local 206. The union has been notified. The union has a newsletter.');
+}
+
+/** The slime was not a member. The slime was an intern. */
+export function internLine() {
+  return ledgerize('It was an intern. It was TECHNICALLY doing its best. The Ledger has noted this. The Ledger will keep noting it.');
 }
 
 /** Fresh per-run stats. The riddle door and customs both read from this. */

@@ -68,6 +68,8 @@ export function killBoss(game, fx) {
     if (game.floorNum >= 4 && game.player.swordLv < 3 && game.rng() < .6) {
       game.pickups.push({ kind: 'sword', x: b.x, y: b.y + 24, v: 1 });
     }
-    fx.toast('The Warden falls — the stairs open.');
+    fx.toast(b.name === 'the Middle Manager'
+      ? 'Per his last attack: none. The stairs open.'
+      : 'The Warden falls — the stairs open.');
   }
 }

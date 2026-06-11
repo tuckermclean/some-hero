@@ -16,8 +16,11 @@ import { mkBoss, wardenStats } from '../entities/boss.js';
  *                        [{ w, h, tag }] — always generated, always connected,
  *                        returned in result.pinnedRooms with their tag so story
  *                        content can be placed inside.
+ * @param {object} opts   { forceSeal } — playtest override for the seal type
+ *                        ('key'|'plates'|'torch'|'riddle'|'traps'|'warden');
+ *                        invalid/absent values change nothing.
  */
-export function generateFloor(f, h2, rng = Math.random, pinned = []) {
+export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) {
   const w = TOMB.W, h = TOMB.H;
   const map = new Uint8Array(w * h).fill(TL.TW);
   const world = { map, w, h, h2 };
@@ -81,13 +84,15 @@ export function generateFloor(f, h2, rng = Math.random, pinned = []) {
   };
 
   // ---- seal puzzle ----
-  if (f % 4 === 0) {
+  const SEALS = ['key', 'plates', 'torch', 'riddle', 'traps', 'warden'];
+  const forced = SEALS.includes(opts.forceSeal) ? opts.forceSeal : null;
+  if (forced ? forced === 'warden' : f % 4 === 0) {
     puzzle = { type: 'warden' };
     const s = wardenStats(f);
     boss = mkBoss(exitR.cx * T, (exitR.cy - 1) * T, s);
   } else {
     const types = ['key', 'plates', 'torch', 'riddle', 'traps'];
-    const ty = types[(rng() * types.length) | 0];
+    const ty = forced || types[(rng() * types.length) | 0];
     if (ty === 'riddle') {
       puzzle = { type: 'riddle', solved: false, attempts: 0 };
     } else if (ty === 'traps') {
@@ -160,6 +165,13 @@ export function generateFloor(f, h2, rng = Math.random, pinned = []) {
     pickups.push(rng() < .18
       ? { kind: 'potion', x: s.tx * T + T / 2, y: s.ty * T + T / 2, v: 1 }
       : { kind: 'gold',   x: s.tx * T + T / 2, y: s.ty * T + T / 2, v: 2 });
+  }
+
+  // ---- the interns (outside the combat budget; no quota, no scaling) ----
+  const nSlimes = (rng() * 3) | 0;
+  for (let i = 0; i < nSlimes; i++) {
+    const r = pickRoom(), s = freeSpotIn(r);
+    enemies.push(mkEnemy('slime', s.tx * T + T / 2, s.ty * T + T / 2));
   }
 
   // ---- pinned-room content ----

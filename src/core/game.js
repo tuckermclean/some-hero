@@ -10,6 +10,7 @@ import { spawnOverworld } from '../world/spawn.js';
 export function createGame({ rng = Math.random } = {}) {
   return {
     rng,
+    skin: null,   // active skin name; null = the registry's default
     state: ST.MENU,
     t: 0,
     zone: 'ow', floorNum: 0, deepest: 0, owSave: null,
@@ -24,7 +25,9 @@ export function createGame({ rng = Math.random } = {}) {
     quest: { stage: 0, kills: 0, need: 5 }, // 0 none, 1 hunting, 2 claim, 3 seek boss, 4 done
     meta: createMeta(),       // survives death AND newRun: knowledge is permanent
     runStats: newRunStats(),  // per-dungeon-run; the Ledger grades from this
-    lastHitBy: null
+    lastHitBy: null,
+    debug: { god: false, reveal: false, forceSeal: null }  // the cheat menu's levers
+
   };
 }
 

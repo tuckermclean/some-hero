@@ -53,21 +53,21 @@ test('killing an enemy grants xp and drops loot', () => {
   assert.ok(game.pickups.every(p => ['gold', 'heart', 'potion'].includes(p.kind)));
 });
 
-test('scarab kills advance the hunt quest and flip it to claim stage', () => {
+test('pigeon kills advance the hunt quest and flip it to claim stage', () => {
   const game = blankGame(), fx = spyFx();
   game.quest.stage = 1; game.quest.kills = 0; game.quest.need = 5;
   for (let i = 0; i < 5; i++) {
-    hitEnemy(game, mkEnemy('scarab', 0, 0), 99, 0, 0, fx);
+    hitEnemy(game, mkEnemy('pigeon', 0, 0), 99, 0, 0, fx);
   }
   assert.equal(game.quest.kills, 5);
   assert.equal(game.quest.stage, 2);
   assert.equal(fx.count('questChanged'), 5);
 });
 
-test('non-scarab kills do not touch the quest', () => {
+test('non-pigeon kills do not touch the quest', () => {
   const game = blankGame(), fx = spyFx();
   game.quest.stage = 1;
-  hitEnemy(game, mkEnemy('jackal', 0, 0), 99, 0, 0, fx);
+  hitEnemy(game, mkEnemy('goose', 0, 0), 99, 0, 0, fx);
   assert.equal(game.quest.kills, 0);
 });
 
@@ -89,4 +89,34 @@ test('the first Front Office kill of a run is a Local 206 member; only the first
   const game3 = blankGame(), fx3 = spyFx();
   hitEnemy(game3, mkEnemy('scarab', 0, 0), 99, 0, 0, fx3);
   assert.ok(!fx3.calls.some(c => c[0] === 'toast' && /Local 206/.test(c[1])));
+});
+
+test('striking a retaliator provokes it and its kind within earshot', () => {
+  const game = blankGame(), fx = spyFx();
+  const a = mkEnemy('pigeon', 100, 100);
+  const b = mkEnemy('pigeon', 180, 100);   // within 150px of a
+  const c = mkEnemy('pigeon', 600, 600);   // out of earshot
+  const d = mkEnemy('goose', 120, 100);    // different kind
+  game.enemies = [a, b, c, d];
+  hitEnemy(game, a, 1, 0, 0, fx);
+  assert.equal(a.provoked, true);
+  assert.equal(b.provoked, true, 'the flock remembers');
+  assert.equal(c.provoked, false, 'out of earshot');
+  assert.equal(d.provoked, false, 'geese have their own grievances');
+});
+
+test('killing the intern: the Ledger notes it, once; the union line skips it', () => {
+  const game = blankGame(), fx = spyFx();
+  game.zone = 'tomb'; game.floorNum = 1;
+  hitEnemy(game, mkEnemy('slime', 0, 0), 99, 0, 0, fx);
+  assert.ok(fx.calls.some(c => c[0] === 'toast' && /TECHNICALLY doing its best/.test(c[1])));
+  assert.ok(!fx.calls.some(c => c[0] === 'toast' && /Local 206/.test(c[1])),
+    'the intern was not a union member');
+  // the next (real) kill is still the first union casualty
+  hitEnemy(game, mkEnemy('skeleton', 0, 0), 99, 0, 0, fx);
+  assert.ok(fx.calls.some(c => c[0] === 'toast' && /Local 206/.test(c[1])));
+  // a second slime death does not repeat the note
+  const toasts = fx.calls.filter(c => c[0] === 'toast' && /TECHNICALLY/.test(c[1])).length;
+  hitEnemy(game, mkEnemy('slime', 0, 0), 99, 0, 0, fx);
+  assert.equal(fx.calls.filter(c => c[0] === 'toast' && /TECHNICALLY/.test(c[1])).length, toasts);
 });

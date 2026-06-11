@@ -8,7 +8,13 @@
 
 import { ledgerize } from './ledger.js';
 
-const KIND_NAMES = { scarab: 'scarabs', jackal: 'jackals', spirit: 'spirits', mummy: 'mummies' };
+const KIND_NAMES = {
+  skeleton: 'skeletons', mailbat: 'mailbats', consultant: 'consultants',
+  cabinet: 'cabinets', slime: 'interns (technically)',
+  pigeon: 'pigeons', goose: 'geese', veteran: 'veterans',
+  // retired desert roster
+  scarab: 'scarabs', jackal: 'jackals', spirit: 'spirits', mummy: 'mummies'
+};
 
 /** Build numeric multiple-choice options around the true value. */
 function numberOptions(value, rng) {

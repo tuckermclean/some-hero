@@ -16,20 +16,20 @@ export function talkTo(n, game, dialog, fx) {
     if (quest.stage === 0) dialog.say(n.name, [
       hespethLine(meta.deaths),
       'TICKET #44,107. "Go downstairs and cancel the apocalypse. Should be quick." *stamp*',
-      'Before the Guild insures you for the Downstairs, prove you can handle pests. Five of the beetles outside. Stampathy believes in you. Stampathy is a stamp.'
+      'Before the Guild insures you for the Downstairs, prove you can handle pests. Five of the plaza pigeons. They won\'t start it. You will. Stampathy believes in you. Stampathy is a stamp.'
     ], () => { startHunt(quest); fx.questChanged(); });
     else if (quest.stage === 1) dialog.say(n.name, [
-      'The beetles. ' + (quest.need - quest.kills) + ' more. I have prepared the stamp.'
+      'The pigeons. ' + (quest.need - quest.kills) + ' more. Mind the flock — they remember faces. I have prepared the stamp.'
     ]);
     else if (quest.stage === 2) dialog.say(n.name, [
-      'Five beetles. Verified. Stamped. *stamp* That one wasn\'t necessary. *stamp* Neither was that.',
-      'Fifty gold, hazard rate. Now: the Middle Manager squats in the ruins northeast. Your ticket can\'t proceed past a man who says "let\'s circle back" unless someone makes him stop.',
-      'When he charges — he announces it first. In business voice. You\'ll know.'
+      'Five pigeons. Verified. Stamped. *stamp* That one wasn\'t necessary. *stamp* Neither was that.',
+      'Fifty gold, hazard rate. Now: the Reenactor holds the Victory Site northeast. He has performed the Battle of Greater Pflum daily for forty years. Both sides. Alone. Your ticket is, apparently, a prop he needs.',
+      'When he charges — he announces it first. Loudly. It\'s theater. You\'ll know.'
     ], () => { claimReward(game); fx.sfx('coin'); fx.hudChanged(); fx.questChanged(); });
     else if (quest.stage === 3) {
       if (!meta.credentials.backstory) {
         dialog.say(n.name, [
-          'Middle Manager. Northeast. Buy Glurp first. (See label.)',
+          'The Reenactor. Northeast. Buy Glurp first. (See label.)',
           'Also: the Door Golem will want a notarized tragic backstory before the Downstairs. The Ledger has\u2026 volunteered to write yours. It\'s been waiting. It has drafts.'
         ], () => {
           dialog.setSpeaker(n.name);
@@ -49,7 +49,7 @@ export function talkTo(n, game, dialog, fx) {
           ]);
         });
       } else dialog.say(n.name, [
-        'Middle Manager. Northeast. Buy Glurp first. (See label.)',
+        'The Reenactor. Northeast. Buy Glurp first. (See label.)',
         'Deaths on file: ' + meta.deaths + '. Day ' + meta.day + '. Body bin\'s where it always is.'
       ]);
     }
@@ -119,12 +119,30 @@ export function talkTo(n, game, dialog, fx) {
       ]);
     });
 
+  } else if (n.name === 'Docent Brell') {
+    dialog.say(n.name, [
+      'Welcome to the future site of the Royal Museum of Having Defeated Evil. Malgrath was slain forty-ONE years ago by a hero wielding the legendary sword Thirstbringer.',
+      'And THAT\'S museum science.'
+    ]);
+
+  } else if (n.name === 'King Pfilbert') {
+    dialog.say(n.name, [
+      'Apocalypse? Sounds like a downstairs problem! We\'ll get \'em next year, champ.',
+      'I\'ve been down there, you know. Floor one. Bought a magnet. Have you seen my magnet? It\'s on the throne. Everyone has seen the magnet.'
+    ]);
+
+  } else if (n.name === 'Safety Officer Dimwald') {
+    dialog.say(n.name, [
+      'This kingdom is a certified Safe Workplace. The banner is only a little on fire. Fire is a known feature of banners. Certified.',
+      'The goose is exempt. Nobody certifies a goose.'
+    ]);
+
   } else { // Picketing Hero
     const lines = quest.stage >= 3
-      ? ['WHAT DO WE WANT! A REASONABLE DEDUCTIBLE! Anyway \u2014 the Middle Manager telegraphs his charge. Step aside, THEN strike. We\'d do it ourselves but, you know. Strike.',
+      ? ['WHAT DO WE WANT! A REASONABLE DEDUCTIBLE! Anyway \u2014 the Reenactor announces his charge. It\'s theater. Step aside on "FAMOUS," strike on "CHARGE." We\'d do it ourselves but, you know. Strike.',
          'Nice gear, by the way. (We\'re heckling a child\'s job. We know. We\'re a little proud.)']
       : ['WHEN DO WE WANT IT! FOLLOWING STANDARD PROCESSING TIMES!',
-         'You\'re the new hire? They gave the apocalypse ticket to\u2014 okay. Okay! Tip: the beetles wobble. The dogs don\'t. Solidarity.'];
+         'You\'re the new hire? They gave the apocalypse ticket to\u2014 okay. Okay! Tip: the pigeons won\'t start it. The geese need no reason. Solidarity.'];
     dialog.say(n.name, lines);
   }
 }

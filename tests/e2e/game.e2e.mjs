@@ -199,6 +199,50 @@ try {
   await shot('08-daylight-after-customs');
   step('declaring releases you into daylight, graded');
 
+  // ---------- the cheat panel (?test implies ?cheats) ----------
+  await page.click('#cheatBtn');
+  await page.getByText('Floor 4').click();
+  await page.waitForTimeout(600);
+  assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 4 });
+  assert.equal(await page.evaluate(() => !!window.__sh.game.boss), true, 'floor 4 has its warden');
+  assert.equal(await page.evaluate(() => window.__sh.game.meta.runs), 2, 'jump started exactly one new run');
+  await shot('09-cheat-floor4');
+  step('cheat: Floor 4 jump keeps run invariants');
+
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'God' }).click();
+  await page.locator('#cheatPanel button', { hasText: 'Die now' }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() =>
+    document.getElementById('over').classList.contains('hidden')), true, 'god mode shrugs off death');
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'God' }).click();   // back off
+  await page.locator('#cheatPanel button', { hasText: 'Die now' }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => document.getElementById('overTitle').innerText), 'INCIDENT REPORT');
+  await page.mouse.click(500, 120); await page.waitForTimeout(300);       // resurrect
+  assert.deepEqual(await G(), { zone: 'ow', state: 1, floor: 0 });
+  step('cheat: god mode blocks death; without it the incident report files');
+
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'Win' }).click();
+  await page.waitForTimeout(400);                                          // the magnet does the rest
+  assert.match(await page.evaluate(() => document.getElementById('overTitle').innerText), /TICKET #44,107: STAMPED/);
+  await page.mouse.click(500, 120); await page.waitForTimeout(200);
+  step('cheat: Win drops the medallion through the real collect path');
+
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'Skin' }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => document.body.classList.contains('skin-desert')), true);
+  assert.equal(await page.evaluate(() => window.__sh.game.skin), 'desert');
+  await shot('10-classic-skin');
+  await page.locator('#cheatPanel button', { hasText: 'Skin' }).click();   // back to pflum
+  await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(() => window.__sh.game.skin), 'pflum');
+  await page.click('#cheatBtn');                                           // close the panel
+  step('cheat: skin toggles to classic desert and back, live');
+
   assert.deepEqual(pageErrors, [], 'no uncaught page errors');
   console.log(`\ne2e: all ${steps} steps passed. screenshots in tests/e2e/shots/`);
 } catch (err) {

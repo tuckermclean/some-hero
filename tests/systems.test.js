@@ -85,19 +85,22 @@ test('nearestNpc finds within 44px only', () => {
   assert.equal(nearestNpc(npcs, n.x + 500, n.y + 500), null);
 });
 
-test('spawnOverworld: ~26+ enemies, none in the village, guardian asleep in the ruins, 3 npcs', () => {
+test('spawnOverworld: ~26+ fauna, none in the village, the Reenactor asleep at the Victory Site', () => {
   const world = generateOverworld(mulberry32(6));
   const s = spawnOverworld(world, mulberry32(6));
   assert.ok(s.enemies.length >= 20);
   for (const e of s.enemies) {
-    if (e.kind === 'spirit') continue;  // spirits live in the ruins
+    if (e.kind === 'veteran') continue;  // veterans hold the Victory Site
     const d = Math.hypot(e.x / T - VIL.x, e.y / T - VIL.y);
     assert.ok(d >= 10, 'enemy spawned inside the village safe zone');
+    assert.ok(e.kind === 'pigeon' || e.kind === 'goose', 'plaza fauna only');
   }
   assert.equal(s.boss.state, 'sleep');
+  assert.equal(s.boss.name, 'the Reenactor');
+  assert.match(s.boss.telegraph, /FAMOUS CHARGE/);
   const btx = s.boss.x / T, bty = s.boss.y / T;
   assert.ok(btx >= RUIN.x0 && btx <= RUIN.x1 && bty >= RUIN.y0 && bty <= RUIN.y1);
-  assert.equal(s.npcs.length, 3);
+  assert.equal(s.npcs.length, 6);
 });
 
 test('newRun resets the player and quest and repopulates', () => {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { startHunt, recordScarabKill, claimReward, completeQuest, questLabel, tombQuestLine } from '../src/systems/quest.js';
+import { startHunt, recordPestKill, claimReward, completeQuest, questLabel, tombQuestLine } from '../src/systems/quest.js';
 import { blankGame } from './helpers.js';
 
 test('full quest arc: 0 -> hunt -> claim -> seek -> done', () => {
@@ -12,7 +12,7 @@ test('full quest arc: 0 -> hunt -> claim -> seek -> done', () => {
   assert.equal(q.stage, 1);
   assert.equal(q.kills, 0);
 
-  for (let i = 0; i < q.need; i++) assert.equal(recordScarabKill(q), true);
+  for (let i = 0; i < q.need; i++) assert.equal(recordPestKill(q), true);
   assert.equal(q.stage, 2);
 
   const goldBefore = game.player.gold;
@@ -24,11 +24,11 @@ test('full quest arc: 0 -> hunt -> claim -> seek -> done', () => {
   assert.equal(q.stage, 4);
 });
 
-test('recordScarabKill is a no-op outside the hunt stage', () => {
+test('recordPestKill is a no-op outside the hunt stage', () => {
   const q = { stage: 0, kills: 0, need: 5 };
-  assert.equal(recordScarabKill(q), false);
+  assert.equal(recordPestKill(q), false);
   q.stage = 3;
-  assert.equal(recordScarabKill(q), false);
+  assert.equal(recordPestKill(q), false);
   assert.equal(q.kills, 0);
 });
 
@@ -37,7 +37,7 @@ test('questLabel matches each stage', () => {
   assert.match(questLabel({ stage: 0 }), /44,107/);
   assert.match(questLabel({ stage: 1, kills: 2, need: 5 }), /2 \/ 5/);
   assert.match(questLabel({ stage: 2 }), /Return/);
-  assert.match(questLabel({ stage: 3 }), /Middle Manager/);
+  assert.match(questLabel({ stage: 3 }), /Reenactor/);
   assert.match(questLabel({ stage: 4 }, 0), /apocalypse/);
   assert.match(questLabel({ stage: 4 }, 6), /depth 6/);
 });

@@ -56,8 +56,13 @@ test('dead or missing boss is inert', () => {
   updateBoss(game, 1, fx);  // no throw
 });
 
-test('warden stats scale with floor', () => {
-  assert.deepEqual(wardenStats(4), { hp: Math.ceil(40 * 1.72), dmg: 2 });
+test('warden stats scale with floor; floor 4 is the Middle Manager himself', () => {
+  const w4 = wardenStats(4);
+  assert.equal(w4.hp, Math.ceil(40 * 1.72));
+  assert.equal(w4.dmg, 2);
+  assert.equal(w4.name, 'the Middle Manager');
+  assert.match(w4.telegraph, /circle back/);
   assert.equal(wardenStats(8).dmg, 3);
+  assert.equal(wardenStats(8).name, 'the Warden');
   assert.ok(wardenStats(12).hp > wardenStats(4).hp);
 });

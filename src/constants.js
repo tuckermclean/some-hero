@@ -23,12 +23,7 @@ export const SOLID = [
   false, true, false, false, false
 ];
 
-// Base tile fill colours, indexed by tile id
-export const TCOL = [
-  '#e8c27a', '#dcae5f', '#a8764f', '#2e9e8f', '#e8c27a', '#d9b98a',
-  '#cdb592', '#8a6a52', '#d9b98a', '#e0b46a',
-  '#4a3a30', '#241a14', '#4a3a30', '#4a3a30', '#4a3a30'
-];
+// Tile fill colours live on the skins: src/render/skins/*.js (tcol).
 
 // Overworld landmarks (tile coords)
 export const VIL = { x: 16, y: 40 };

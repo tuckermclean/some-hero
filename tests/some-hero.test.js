@@ -212,3 +212,13 @@ test('floors without pinned specs behave exactly as before', () => {
   const g = generateFloor(2, h2, mulberry32(9));
   assert.deepEqual(g.pinnedRooms, []);
 });
+
+// ---------- the rubric is never shown; this is the rubric ----------
+
+test('harming the intern costs a letter grade', () => {
+  const meta = createMeta();
+  const clean = gradeRun(meta, { depth: 1, kills: 0, died: false, killsByKind: {} });
+  const guilty = gradeRun(meta, { depth: 1, kills: 0, died: false, killsByKind: { slime: 1 } });
+  const order = ['F', 'D', 'C', 'B', 'A', 'S'];
+  assert.equal(order.indexOf(guilty), order.indexOf(clean) - 1);
+});

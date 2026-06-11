@@ -11,6 +11,7 @@
 
 import { T, VIL, ST } from '../constants.js';
 import { recordDeath } from '../core/meta.js';
+import { restoreSurface } from '../world/zones.js';
 
 /**
  * Process a death and respawn the player at the Guild Hall (the village).
@@ -23,12 +24,7 @@ export function respawnAtGuild(game, fx) {
 
   // climb out of the Downstairs if that's where you died
   if (game.zone === 'tomb' && game.owSave) {
-    const s = game.owSave;
-    game.world = s.world;
-    game.enemies = s.enemies; game.pickups = s.pickups; game.npcs = s.npcs; game.boss = s.boss;
-    game.blocks = []; game.plates = []; game.torches = []; game.puzzle = null;
-    game.zone = 'ow';
-    game.floorNum = 0;
+    restoreSurface(game);
     game.owSave = null;
   }
   game.parts = [];

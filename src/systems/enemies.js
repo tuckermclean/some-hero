@@ -13,14 +13,19 @@ export function updateEnemies(game, dt, view, fx) {
     if (dist > view.w * 1.4) continue;  // off-screen cull
     e.flash = Math.max(0, e.flash - dt);
 
+    // a retaliator is at peace until provoked; furniture doesn't even pace
+    const hostile = !e.passive && (!e.retaliates || e.provoked);
+
     if (e.kb > 0) {
       e.kb -= dt;
       moveEnt(w, game.blocks, e, e.kbx * dt, e.kby * dt);
-    } else if (dist < e.aggro) {
-      const s = e.spd * (e.kind === 'scarab' ? (0.8 + 0.4 * Math.sin(game.t * 6 + e.x)) : 1);
+    } else if (hostile && dist < e.aggro) {
+      // skeletons rattle (the wobble IS the rattle); scarabs kept it first
+      const wob = e.kind === 'skeleton' || e.kind === 'scarab';
+      const s = e.spd * (wob ? (0.8 + 0.4 * Math.sin(game.t * 6 + e.x)) : 1);
       if (e.ghost) { e.x += dx / dist * s * dt; e.y += dy / dist * s * dt; }
       else moveEnt(w, game.blocks, e, dx / dist * s * dt, dy / dist * s * dt);
-    } else {
+    } else if (!(e.still && !e.provoked)) {
       e.wt -= dt;
       if (e.wt <= 0) {
         e.wt = 1 + game.rng() * 2;
@@ -31,7 +36,7 @@ export function updateEnemies(game, dt, view, fx) {
       else moveEnt(w, game.blocks, e, e.wx * e.spd * .4 * dt, e.wy * e.spd * .4 * dt);
     }
 
-    if (dist < (e.w + p.w) / 2 + 2) hurtPlayer(game, e.dmg, fx, e.kind);
+    if (hostile && dist < (e.w + p.w) / 2 + 2) hurtPlayer(game, e.dmg, fx, e.kind);
     if (e.ghost) {
       e.x = Math.max(T, Math.min(w.w * T - T, e.x));
       e.y = Math.max(T, Math.min(w.h * T - T, e.y));

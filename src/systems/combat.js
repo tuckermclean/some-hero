@@ -4,8 +4,8 @@ import { ST } from '../constants.js';
 import { burst } from '../entities/particles.js';
 import { gainXp } from './progression.js';
 import { dropLoot } from './loot.js';
-import { recordScarabKill } from './quest.js';
-import { union206Line } from './ledger.js';
+import { recordPestKill } from './quest.js';
+import { union206Line, internLine } from './ledger.js';
 
 /** Player melee damage from sword tier + level. */
 export function swordDmg(player) {
@@ -17,6 +17,7 @@ export function swordDmg(player) {
  * on a hit. Switches state to DEAD at 0 hp. Returns true if damage landed.
  */
 export function hurtPlayer(game, dmg, fx, cause = null) {
+  if (game.debug && game.debug.god) return false;  // playtest god mode
   const p = game.player;
   if (p.inv > 0) return false;
   if (cause) game.lastHitBy = cause;
@@ -34,23 +35,35 @@ export function hurtPlayer(game, dmg, fx, cause = null) {
 
 /**
  * Damage an enemy: flash, knockback, death -> xp, loot, quest progress.
+ * Striking a retaliator provokes it — and its kind remembers: same-kind
+ * enemies within earshot turn hostile too.
  */
 export function hitEnemy(game, e, dmg, kx, ky, fx) {
   e.hp -= dmg;
   e.flash = .15;
   e.kb = .18; e.kbx = kx; e.kby = ky;
+  if (e.retaliates && !e.provoked) {
+    e.provoked = true;
+    for (const o of game.enemies) {
+      if (o !== e && o.kind === e.kind && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) < 150) o.provoked = true;
+    }
+  }
   fx.sfx('hit');
   burst(game.parts, e.x, e.y, 6, e.col || '#fff', game.rng);
   if (e.hp <= 0 && !e.dead) {
     e.dead = true;
     game.runStats.kills++;
     game.runStats.killsByKind[e.kind] = (game.runStats.killsByKind[e.kind] || 0) + 1;
-    // the first Front Office casualty of each run was a union member
-    if (game.zone === 'tomb' && game.floorNum <= 4 && game.runStats.kills === 1) {
+    if (e.kind === 'slime') {
+      // it was an intern. it was TECHNICALLY doing its best.
+      if (game.runStats.killsByKind.slime === 1) fx.toast(internLine());
+    } else if (game.zone === 'tomb' && game.floorNum <= 4 &&
+               game.runStats.kills - (game.runStats.killsByKind.slime || 0) === 1) {
+      // the first Front Office casualty of each run was a union member
       fx.toast(union206Line());
     }
     gainXp(game, e.xpv, fx);
     dropLoot(game.pickups, e.x, e.y, game.rng);
-    if (e.kind === 'scarab' && recordScarabKill(game.quest)) fx.questChanged();
+    if (e.kind === 'pigeon' && recordPestKill(game.quest)) fx.questChanged();
   }
 }

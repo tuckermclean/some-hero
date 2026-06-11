@@ -14,13 +14,47 @@ test('mkEnemy copies the archetype', () => {
   assert.equal(mkEnemy('spirit', 0, 0).ghost, true);
 });
 
-test('pickTombKind: mummies only from floor 3+', () => {
+test('pickTombKind: cabinets only from floor 3+; Front Office kinds only', () => {
   for (let s = 0; s < 200; s++) {
-    assert.notEqual(pickTombKind(1, mulberry32(s)), 'mummy');
+    const k = pickTombKind(1, mulberry32(s));
+    assert.notEqual(k, 'cabinet');
+    assert.ok(['skeleton', 'mailbat', 'consultant'].includes(k));
   }
-  let sawMummy = false;
-  for (let s = 0; s < 200; s++) if (pickTombKind(5, mulberry32(s)) === 'mummy') sawMummy = true;
-  assert.ok(sawMummy);
+  let sawCabinet = false;
+  for (let s = 0; s < 200; s++) if (pickTombKind(5, mulberry32(s)) === 'cabinet') sawCabinet = true;
+  assert.ok(sawCabinet);
+});
+
+test('behavior flags: passive never chases or hurts; retaliators wait to be struck', () => {
+  const game = blankGame(), fx = spyFx();
+  // the intern, directly underfoot: no chase, no contact damage
+  const slime = mkEnemy('slime', game.player.x + 5, game.player.y);
+  game.enemies = [slime];
+  updateEnemies(game, 1 / 60, VIEW, fx);
+  assert.equal(game.player.hp, 10, 'the intern is harmless');
+
+  // a pigeon in aggro range: peaceable until provoked
+  const pigeon = mkEnemy('pigeon', game.player.x + 60, game.player.y);
+  game.enemies = [pigeon];
+  const x0 = pigeon.x;
+  updateEnemies(game, 1 / 60, VIEW, fx);
+  assert.ok(Math.abs(pigeon.x - x0) < 2, 'unprovoked pigeon does not charge');
+  pigeon.provoked = true;
+  updateEnemies(game, 1 / 60, VIEW, fx);
+  assert.ok(pigeon.x < x0, 'provoked pigeon charges');
+});
+
+test('still furniture does not wander until provoked', () => {
+  const game = blankGame({ w: 60, h: 60 }), fx = spyFx();
+  const cab = mkEnemy('cabinet', game.player.x + 1000, game.player.y);
+  game.enemies = [cab];
+  const x0 = cab.x, y0 = cab.y;
+  for (let i = 0; i < 60; i++) updateEnemies(game, 1 / 30, VIEW, fx);
+  assert.equal(cab.x, x0, 'the cabinet is furniture');
+  assert.equal(cab.y, y0);
+  cab.provoked = true;
+  for (let i = 0; i < 60; i++) updateEnemies(game, 1 / 30, VIEW, fx);
+  assert.ok(cab.x !== x0 || cab.y !== y0, 'provoked furniture moves');
 });
 
 test('aggro: an enemy in range moves toward the player', () => {

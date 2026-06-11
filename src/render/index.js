@@ -5,6 +5,7 @@ import { drawTiles } from './tiles.js';
 import { drawBlocks, drawTorches, drawTraps, drawPickups } from './objects.js';
 import { drawNpc, drawEnemy, drawBoss, drawPlayer } from './actors.js';
 import { drawLantern } from './lighting.js';
+import { getSkin } from './skins/index.js';
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -14,7 +15,7 @@ import { drawLantern } from './lighting.js';
 export function render(ctx, game, screen) {
   const { W, H, dpr, scale, viewW } = screen;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#2a1c14'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = getSkin(game).pal.bg; ctx.fillRect(0, 0, W, H);
   ctx.save();
   ctx.scale(scale, scale);
   ctx.translate(-game.cam.x, -game.cam.y);

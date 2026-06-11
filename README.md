@@ -5,14 +5,15 @@
 
 A playable vertical slice of the SOME HERO design doc, built by gutting the
 Amulet of the Sands atomic engine. Covers Build Order v2 steps 1–5 plus both
-engine prerequisites. The desert art is placeholder; the *systems* and the
-*voice* are the deliverable.
+engine prerequisites. The game now wears its real setting — Greater Pflum
+topside, the Front Office below; the original desert look is preserved as a
+switchable skin.
 
 ## Run / test
 
 ```
 npm start         # any static server works
-npm test          # 144 unit tests, zero runtime dependencies, node --test
+npm test          # 165+ unit tests, zero runtime dependencies, node --test
 npm run test:e2e  # drives the real game in headless Chromium (Playwright dev-dep;
                   # uses $CHROME_PATH, /usr/bin/chromium, or Playwright's download)
 ```
@@ -20,9 +21,42 @@ npm run test:e2e  # drives the real game in headless Chromium (Playwright dev-de
 The e2e suite (`tests/e2e/game.e2e.mjs`) covers the seams unit tests can't:
 the splash timeline and the Ledger's key reactions, Enter-to-start, the Door
 Golem's stamp ceremony playing *topside* before descent, the trap-counter
-room, and customs happening *at the door* before daylight. It screenshots
-each beat into `tests/e2e/shots/`. The game exposes its state for the test
-only when loaded with `?test`.
+room, customs happening *at the door* before daylight, the cheat menu, and
+the live skin toggle. It screenshots each beat into `tests/e2e/shots/`. The
+game exposes its state for the test only when loaded with `?test`.
+
+## Skins (`src/render/skins/`)
+
+All art is procedural Canvas 2D, organized as skins: `pflum` (default —
+meadow kingdom, hedgerows, Chauncey's fountain; carpet-and-filing-cabinet
+Front Office with EXIT-green accents) and `desert` (the original Amulet of
+the Sands look, preserved verbatim — `tests/skin-snapshot.test.js` pins its
+draw output by hash). A skin owns tile fills + decorations, object/actor
+palettes, the lantern, and the CSS UI vars (`body.skin-*`). The retired
+desert monster drawings are parked in `desert.enemyDraw`. Switch skins from
+the cheat menu; the choice persists in localStorage.
+
+## The roster
+
+Front Office: `skeleton` (Local 206, rattles), `mailbat` (URGENT),
+`consultant` (ghost; walls are for employees), `cabinet` (retaliates —
+inert archival furniture until struck), and the `slime` — the intern,
+fully passive, TECHNICALLY doing its best; killing it silently costs a
+letter grade. Topside: `pigeon` (retaliates; the flock remembers),
+`goose` (the one topside danger; declined certification), `veteran`
+(ghosts still securing the Victory Site). The overworld boss is **the
+Reenactor** (announces the Famous Charge); **the Middle Manager** is the
+floor-4 warden, circle-back telegraph intact. Behavior flags (`passive`,
+`retaliates`, `still`) live in `entities/enemy.js` / `systems/enemies.js`.
+
+## Cheat menu (playtesting)
+
+Load with `?cheats` (or `?test`) — a CHEAT button appears after the splash;
+backtick toggles it. Go to any floor through the real zone functions (run
+invariants intact), grant credentials/gold/sword, set quest stage, force the
+next seal type, toggle god mode / lights / skin, trigger death, customs, or
+the win. Headless mutations live in `systems/debug.js` (unit-tested); the
+panel is `ui/cheats.js` and ships zero markup when the param is absent.
 
 ## What's implemented (mapped to the design doc)
 
