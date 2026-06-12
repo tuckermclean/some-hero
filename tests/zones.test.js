@@ -135,6 +135,7 @@ test('floors persist within a run: your mess is where you left it', () => {
   assert.equal(game.enemies.length, enemyCount, 'the casualty stayed dead');
   assert.equal(game.pickups.length, 0, 'taken loot stayed taken');
   assert.equal(game.puzzle.have, true, 'the seal stayed open');
+  assert.ok(game.props.some(p => p.kind === 'table'), 'the break room furniture persists too');
   assert.deepEqual(game.parts, [], 'particles reset');
 });
 

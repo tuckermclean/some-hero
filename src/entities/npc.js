@@ -13,7 +13,12 @@ export function villageNpcs() {
     // the shop sits at the village edge so its jingle is a destination,
     // not a roommate of the resurrection desk
     { name: 'Gift Shop Gnoll',  x: (VIL.x + 5) * T,   y: (VIL.y - 1) * T,   col: '#a07232', hat: '#c0392b' },
-    { name: 'Picketing Hero',   x: (VIL.x) * T,       y: (VIL.y + 2.5) * T, col: '#4f8f8f', hat: '#c9a227' },
+    // the picket line. it's a line now. the chants still don't scan.
+    // (west of the resurrection desk's foot traffic — you can spawn
+    // without being immediately unionized)
+    { name: 'Picketing Hero',   x: (VIL.x - 2.4) * T, y: (VIL.y + 2.6) * T, col: '#4f8f8f', hat: '#c9a227', sign: true },
+    { name: 'Picketing Hero',   x: (VIL.x - 1.2) * T, y: (VIL.y + 2.9) * T, col: '#5a7a4f', hat: '#b06a4a', sign: true },
+    { name: 'Picketing Hero',   x: (VIL.x) * T,       y: (VIL.y + 2.6) * T, col: '#8f4f6f', hat: '#9aa0a8', sign: true },
     // ambient residents: one bit each, defended forever
     { name: 'Docent Brell',     x: (VIL.x + 4) * T,   y: (VIL.y + 1.5) * T, col: '#7a4a6e', hat: '#c9a227' },
     { name: 'King Pfilbert',    x: (VIL.x - 4) * T,   y: (VIL.y + 1) * T,   col: '#5e3a8f', hat: '#e0b73d' },

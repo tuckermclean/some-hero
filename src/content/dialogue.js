@@ -183,43 +183,38 @@ export function talkTo(n, game, dialog, fx) {
     dialog.say(n.name, greeting, mainMenu);
 
   } else if (n.name === 'GLURP-O-MATIC') {
+    const HAZARD_PRICE = 35;   // topside it's 20. down here the hazard is ambient.
     const greeting = meta.credit.score >= 750
       ? ['THE GLURP-O-MATIC HUMS. The display scrolls: "WELCOME, PREFERRED ADVENTURER. PRE-QUALIFIED. 9.99% APR. THE MACHINE KNOWS YOUR NAME."']
-      : ['THE GLURP-O-MATIC HUMS. GLURP™: 20 g. The coin slot has seen things. (See label.)'];
+      : ['THE GLURP-O-MATIC HUMS. GLURP™: ' + HAZARD_PRICE + ' g. HAZARD PRICING IN EFFECT. THE HAZARD IS AMBIENT. (See label.)'];
     dialog.say(n.name, greeting, () => {
       dialog.setSpeaker(n.name);
-      dialog.setText('GLURP™ — 20 g. "Now With Fewer Eels!" The tray is sticky. That is a feature.');
+      dialog.setText('GLURP™ — ' + HAZARD_PRICE + ' g. "Now With Fewer Eels!" Topside it\'s 20. Topside is one flight of stairs away. The machine knows you won\'t.');
       dialog.open();
       dialog.choice([
-        { label: '\u{1F9EA} Insert 20 g', fn: () => {
-          if (player.gold >= 20) {
-            player.gold -= 20; player.potions++;
+        { label: '\u{1F9EA} Insert ' + HAZARD_PRICE + ' g', fn: () => {
+          if (player.gold >= HAZARD_PRICE) {
+            player.gold -= HAZARD_PRICE; player.potions++;
             fx.sfx('coin'); fx.hudChanged();
             dialog.setText('CLUNK. One Glurp. The machine plays 0.5 seconds of the jingle. It is enough.');
           } else dialog.setText('The display reads: "EXACT CHANGE ONLY." You do not have inexact change either.');
           dialog.showHint();
         }},
         { label: '\u{1F4B3} On credit', fn: () => {
-          const v = canBorrow(meta, 20);
+          const v = canBorrow(meta, HAZARD_PRICE);
           if (!v.ok) dialog.setText('The display reads: "' + declineText(v.reason, meta) + '"');
           else {
-            borrow(meta, 20); player.potions++;
+            borrow(meta, HAZARD_PRICE); player.potions++;
             fx.sfx('coin'); fx.hudChanged();
-            dialog.setText('CLUNK. Financed at ' + pct(aprFor(meta.credit.score)) + ' APR. Balance: ' +
+            dialog.setText('CLUNK. Financed: ' + HAZARD_PRICE + ' g at ' + pct(aprFor(meta.credit.score)) + ' APR. Balance: ' +
               meta.credit.balance + ' g. The machine prints a receipt. The receipt is the long kind.');
           }
           dialog.showHint();
         }},
         { label: '\u{1F9B5} KICK IT', fn: () => {
           addMenace(meta, 'Kicked a vending machine. It was witnessed.');
-          if (game.rng() < .25) {
-            player.potions++;
-            fx.sfx('coin'); fx.hudChanged();
-            dialog.setText('Something clunks. A Glurp drops. The machine says nothing. It will remember.');
-          } else {
-            fx.sfx('push');
-            dialog.setText('The machine absorbs the kick. The display flickers: "DECLINED." The incident has been documented. By the machine.');
-          }
+          fx.sfx('push');
+          dialog.setText('The machine absorbs the kick. Nothing drops. Nothing has ever dropped. The display flickers: "DECLINED." The incident has been documented. By the machine.');
           dialog.showHint();
         }},
         { label: 'Walk away', fn: () => {

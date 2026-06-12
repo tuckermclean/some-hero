@@ -31,17 +31,16 @@ test('Hermit Gorse grants Pointy once, while stickless, and is re-talkable', () 
   assert.equal(game.player.swordLv, 3, 'never downgrades');
 });
 
-test('the GLURP-O-MATIC sells, finances, and remembers being kicked', () => {
+test('the GLURP-O-MATIC: hazard pricing, credit at your APR, futile kicks', () => {
   const game = blankGame(), fx = spyFx(), dlg = stubDialog();
-  game.rng = () => 0.9;   // the kick yields nothing today
   const machine = { name: 'GLURP-O-MATIC', kind: 'machine' };
 
-  // cash sale
-  game.player.gold = 25;
+  // cash sale at hazard pricing (topside is 20; down here is 35)
+  game.player.gold = 40;
   talkTo(machine, game, dlg, fx);
   dlg.log.at(-1).opts.find(o => /Insert/.test(o.label)).fn();
-  assert.equal(game.player.potions, 2);
-  assert.equal(game.player.gold, 5);
+  assert.equal(game.player.potions, 1);
+  assert.equal(game.player.gold, 5, '35 g. the hazard is ambient.');
 
   // credit requires income (the machine reads the same form)
   talkTo(machine, game, dlg, fx);
@@ -50,15 +49,17 @@ test('the GLURP-O-MATIC sells, finances, and remembers being kicked', () => {
   game.meta.income = 15;
   talkTo(machine, game, dlg, fx);
   dlg.log.at(-1).opts.find(o => /credit/.test(o.label)).fn();
-  assert.equal(game.meta.credit.balance, 20);
-  assert.equal(game.player.potions, 3);
+  assert.equal(game.meta.credit.balance, 35, 'financed at hazard pricing');
+  assert.equal(game.player.potions, 2);
 
-  // the kick is documented
-  talkTo(machine, game, dlg, fx);
-  dlg.log.at(-1).opts.find(o => /KICK/.test(o.label)).fn();
-  assert.equal(game.meta.menace.length, 1);
+  // the kick is documented and yields nothing. it has never yielded anything.
+  for (let i = 0; i < 5; i++) {
+    talkTo(machine, game, dlg, fx);
+    dlg.log.at(-1).opts.find(o => /KICK/.test(o.label)).fn();
+  }
+  assert.equal(game.meta.menace.length, 5);
   assert.match(game.meta.menace[0].deed, /vending machine/);
-  assert.equal(game.player.potions, 3, 'no free Glurp at rng 0.9');
+  assert.equal(game.player.potions, 2, 'nothing drops. nothing has ever dropped.');
 });
 
 test("Skritch's radio: touching it is documented; respecting the note is not", () => {

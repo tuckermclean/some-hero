@@ -145,12 +145,20 @@ test('respawnAtGuild: deductible, item reset, full hp, back at the Guild Hall', 
   assert.equal(deductible, 51);            // rounded up
   assert.equal(cause, 'jackal');
   assert.equal(game.player.gold, 50);
-  assert.equal(game.player.potions, 1);    // items are temporary
+  assert.equal(game.player.potions, 1);    // items are temporary (capped, never gifted)
   assert.equal(game.player.swordLv, 2);    // DIRK!s are basically immortal
   assert.equal(game.player.hp, game.player.maxhp);
   assert.equal(game.state, ST.PLAY);
   assert.equal(game.meta.deaths, 1);
   assert.equal(Math.floor(game.player.x / T), VIL.x + 1);
+});
+
+test('resurrection no longer includes a complimentary Glurp (budget)', () => {
+  const game = blankGame(), fx = spyFx();
+  game.player.potions = 0;
+  game.player.hp = 0;
+  respawnAtGuild(game, fx);
+  assert.equal(game.player.potions, 0, 'discontinued');
 });
 
 test('dying in the Downstairs respawns Topside with the overworld intact', () => {
@@ -198,13 +206,16 @@ test('pinned rooms always generate, are tagged, connected, and never hold stairs
   }
 });
 
-test('the pinned break room contains its guaranteed Glurp cache', () => {
+test('the break room has furniture, not freebies (the machine is the supply)', () => {
   const h2 = makeHash2(1, 2);
   const g = generateFloor(3, h2, mulberry32(4), [{ w: 5, h: 4, tag: 'breakroom' }]);
+  assert.equal(g.pickups.filter(p => p.kind === 'potion').length, 0, 'no loose Glurp anywhere');
+  assert.equal(g.props.filter(p => p.kind === 'table').length, 1);
+  assert.equal(g.props.filter(p => p.kind === 'chair').length, 3);
   const r = g.pinnedRooms[0];
   const inRoom = p =>
     p.x >= r.x * T && p.x < (r.x + r.w) * T && p.y >= r.y * T && p.y < (r.y + r.h) * T;
-  assert.ok(g.pickups.some(p => p.kind === 'potion' && inRoom(p)), 'no Glurp in the break room');
+  assert.ok(g.props.every(inRoom), 'lunch happens in the break room');
 });
 
 test('floors without pinned specs behave exactly as before', () => {

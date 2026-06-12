@@ -42,7 +42,7 @@ test('tickTimers decays toward zero, never below', () => {
 
 test('usePotion heals 6 capped at max, consumes one, and refuses when full/empty/not playing', () => {
   const game = blankGame(), fx = spyFx();
-  game.player.hp = 3;
+  game.player.hp = 3; game.player.potions = 1;   // bought, not issued
   assert.equal(usePotion(game, fx), true);
   assert.equal(game.player.hp, 9);
   assert.equal(game.player.potions, 0);
@@ -100,7 +100,9 @@ test('spawnOverworld: ~26+ fauna, none in the village, the Reenactor asleep at t
   assert.match(s.boss.telegraph, /FAMOUS CHARGE/);
   const btx = s.boss.x / T, bty = s.boss.y / T;
   assert.ok(btx >= RUIN.x0 && btx <= RUIN.x1 && bty >= RUIN.y0 && bty <= RUIN.y1);
-  assert.equal(s.npcs.length, 8);
+  assert.equal(s.npcs.length, 10);
+  assert.equal(s.npcs.filter(n => n.name === 'Picketing Hero').length, 3, 'the picket line is a line');
+  assert.ok(s.npcs.filter(n => n.name === 'Picketing Hero').every(n => n.sign), 'signs up');
 });
 
 test('newRun resets the player and quest and repopulates', () => {

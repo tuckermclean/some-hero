@@ -16,18 +16,16 @@ test('dropLoot always scatters 1-3 gold near the death point', () => {
   }
 });
 
-test('bonus drop is heart ~10%, potion ~6%, nothing otherwise', () => {
-  let hearts = 0, potions = 0, n = 4000;
+test('bonus drop is heart ~10% topside; Glurp is sold, never found', () => {
+  let hearts = 0, n = 4000;
   for (let seed = 0; seed < n; seed++) {
     const pickups = [];
     dropLoot(pickups, 0, 0, mulberry32(seed));
     hearts += pickups.filter(p => p.kind === 'heart').length;
-    potions += pickups.filter(p => p.kind === 'potion').length;
     assert.ok(pickups.filter(p => p.kind === 'heart').length <= 1);
-    assert.ok(pickups.filter(p => p.kind === 'potion').length <= 1);
+    assert.equal(pickups.filter(p => p.kind === 'potion').length, 0, 'no potion drops anywhere');
   }
   assert.ok(hearts / n > 0.07 && hearts / n < 0.13, `heart rate ${hearts / n}`);
-  assert.ok(potions / n > 0.03 && potions / n < 0.09, `potion rate ${potions / n}`);
 });
 
 test('the dungeon drops no heals: gold only (Glurp is the only medicine down there)', () => {

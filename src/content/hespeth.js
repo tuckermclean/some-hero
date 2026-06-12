@@ -38,5 +38,6 @@ export function resurrectionNote(deductible, garnish = null) {
     if (garnish.missed) note += ' Short. Noted. (Your score felt that.)';
     note += ' *stamp*';
   }
+  note += ' Complimentary Glurp: discontinued. (Budget.)';
   return note;
 }

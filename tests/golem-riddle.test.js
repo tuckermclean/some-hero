@@ -248,7 +248,7 @@ test('kills by kind, Glurps drunk, and dungeon gold are all tracked', () => {
   hitEnemy(game, mkEnemy('spirit', 0, 0), 99, 0, 0, fx);
   assert.deepEqual(game.runStats.killsByKind, { jackal: 2, spirit: 1 });
 
-  game.player.hp = 1;
+  game.player.hp = 1; game.player.potions = 1;   // bought, not found
   usePotion(game, fx);
   assert.equal(game.runStats.glurpsDrunk, 1);
 

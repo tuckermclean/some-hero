@@ -24,7 +24,7 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
   const w = TOMB.W, h = TOMB.H;
   const map = new Uint8Array(w * h).fill(TL.TW);
   const world = { map, w, h, h2 };
-  const enemies = [], pickups = [], blocks = [], plates = [], torches = [], traps = [];
+  const enemies = [], pickups = [], blocks = [], plates = [], torches = [], traps = [], props = [];
   let boss = null, puzzle = null;
 
   // ---- carve rooms + sequential L-corridors ----
@@ -164,11 +164,10 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
     e.aggro = 260;
     enemies.push(e);
   }
+  // floor loot is gold only — Glurp is sold, not found (see label, see price)
   for (let i = 0; i < 4 + (f >> 1); i++) {
     const r = pickRoom(), s = freeSpotIn(r);
-    pickups.push(rng() < .18
-      ? { kind: 'potion', x: s.tx * T + T / 2, y: s.ty * T + T / 2, v: 1 }
-      : { kind: 'gold',   x: s.tx * T + T / 2, y: s.ty * T + T / 2, v: 2 });
+    pickups.push({ kind: 'gold', x: s.tx * T + T / 2, y: s.ty * T + T / 2, v: 2 });
   }
 
   // ---- archival furniture (floors 3+): cabinets line the walls in runs.
@@ -223,10 +222,14 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
   // ---- pinned-room content ----
   for (const r of pinnedRooms) {
     if (r.tag === 'breakroom') {
-      // the imp break area: the GLURP-O-MATIC lives here (placed as an NPC
-      // by applyFloor); somebody left a couple of loose ones beside it
-      pickups.push({ kind: 'potion', x: r.cx * T + T / 2 - 14, y: r.cy * T + T / 2 + 16, v: 1 });
-      pickups.push({ kind: 'potion', x: r.cx * T + T / 2 + 16, y: r.cy * T + T / 2 + 14, v: 1 });
+      // the imp break area: the GLURP-O-MATIC (placed as an NPC by
+      // applyFloor) and somewhere to sit and not be a monster for a minute.
+      // No loose Glurps — the machine is the supply, and it charges.
+      const tx = r.cx * T + T / 2 - 38, ty = r.cy * T + T / 2 + 10;
+      props.push({ kind: 'table', x: tx, y: ty });
+      props.push({ kind: 'chair', x: tx - 22, y: ty + 4, face: 1 });
+      props.push({ kind: 'chair', x: tx + 22, y: ty + 4, face: -1 });
+      props.push({ kind: 'chair', x: tx, y: ty + 24, face: 0 });
     }
     if (r.tag === 'gap') {
       // MIND THE GAP. The gap has a guestbook. Sign it.
@@ -234,7 +237,7 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
     }
   }
 
-  return { world, enemies, pickups, blocks, plates, torches, traps, puzzle, boss,
+  return { world, enemies, pickups, blocks, plates, torches, traps, props, puzzle, boss,
            spawn: { cx: spawn.cx, cy: spawn.cy },
            exit: { cx: exitR.cx, cy: exitR.cy },   // the SD tile; ascending arrives here
            pinnedRooms };

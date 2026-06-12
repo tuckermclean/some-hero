@@ -40,8 +40,8 @@ export function respawnAtGuild(game, fx) {
   const garnish = makeDeathPayment(game.meta, p.gold);
   if (garnish) p.gold -= garnish.paid + garnish.fee;
 
-  // items are temporary
-  p.potions = 1;
+  // items are temporary; the complimentary Glurp is discontinued (budget)
+  p.potions = Math.min(p.potions, 1);
   p.hp = p.maxhp;
   p.inv = 0; p.atkT = 0;
   game.input.atkBuf = 0;

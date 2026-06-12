@@ -13,7 +13,7 @@ export function restoreSurface(game) {
   const s = game.owSave;
   game.world = s.world;
   game.enemies = s.enemies; game.pickups = s.pickups; game.npcs = s.npcs; game.boss = s.boss;
-  game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.puzzle = null;
+  game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.props = []; game.puzzle = null;
   game.parts = [];
   game.zone = 'ow';
   game.floorNum = 0;
@@ -27,7 +27,7 @@ function stashFloor(game) {
     world: game.world,
     enemies: game.enemies, pickups: game.pickups,
     blocks: game.blocks, plates: game.plates, torches: game.torches,
-    traps: game.traps, puzzle: game.puzzle, boss: game.boss, npcs: game.npcs,
+    traps: game.traps, props: game.props, puzzle: game.puzzle, boss: game.boss, npcs: game.npcs,
     spawn: game.floorSpawn, exit: game.floorExit
   };
 }
@@ -56,7 +56,7 @@ export function applyFloor(game, f, arriveAt = 'spawn') {
       world: gen.world,
       enemies: gen.enemies, pickups: gen.pickups,
       blocks: gen.blocks, plates: gen.plates, torches: gen.torches,
-      traps: gen.traps, puzzle: gen.puzzle, boss: gen.boss,
+      traps: gen.traps, props: gen.props, puzzle: gen.puzzle, boss: gen.boss,
       npcs,
       spawn: gen.spawn, exit: gen.exit
     };
@@ -64,7 +64,7 @@ export function applyFloor(game, f, arriveAt = 'spawn') {
   game.world = g.world;
   game.enemies = g.enemies; game.pickups = g.pickups; game.parts = [];
   game.blocks = g.blocks; game.plates = g.plates; game.torches = g.torches;
-  game.traps = g.traps; game.puzzle = g.puzzle; game.boss = g.boss;
+  game.traps = g.traps; game.props = g.props; game.puzzle = g.puzzle; game.boss = g.boss;
   game.npcs = g.npcs;
   game.floorSpawn = g.spawn; game.floorExit = g.exit;
   const at = arriveAt === 'exit' ? g.exit : g.spawn;

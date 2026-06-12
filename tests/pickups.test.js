@@ -45,7 +45,7 @@ test('potion stocks up; maxheart raises the cap; sword upgrades to sun-steel (ti
   put(game, 'maxheart', 5, 2);
   put(game, 'sword', 5);
   updatePickups(game, 1 / 60, fx);
-  assert.equal(game.player.potions, 2);
+  assert.equal(game.player.potions, 1);   // started with none
   assert.equal(game.player.maxhp, 12);
   assert.equal(game.player.swordLv, 4);
   assert.equal(fx.count('toast'), 2);  // maxheart + sword

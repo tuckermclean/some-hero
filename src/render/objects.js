@@ -42,6 +42,34 @@ export function drawTorches(ctx, game) {
   }
 }
 
+/** Set dressing: break room furniture. The monsters eat lunch somewhere. */
+export function drawProps(ctx, game) {
+  const S = getSkin(game);
+  for (const p of game.props) {
+    if (p.kind === 'table') {
+      ctx.fillStyle = 'rgba(0,0,0,.15)';
+      ctx.beginPath(); ctx.ellipse(p.x, p.y + 4, 15, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = S.pal.wood;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, 15, 9, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, 15, 9, 0, 0, Math.PI * 2); ctx.stroke();
+      // a coffee ring. there is always a coffee ring.
+      ctx.strokeStyle = 'rgba(94,62,34,.35)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(p.x + 5, p.y - 2, 3, 0, Math.PI * 2); ctx.stroke();
+    } else if (p.kind === 'chair') {
+      ctx.fillStyle = 'rgba(0,0,0,.12)';
+      ctx.beginPath(); ctx.ellipse(p.x, p.y + 5, 6, 3, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6a7280';
+      ctx.fillRect(p.x - 5, p.y - 2, 10, 7);                       // seat
+      // backrest faces away from the table (face: -1 left, 1 right, 0 below)
+      if (p.face === 0) ctx.fillRect(p.x - 5, p.y + 3, 10, 4);
+      else ctx.fillRect(p.face > 0 ? p.x + 3 : p.x - 5, p.y - 8, 2, 8);
+      ctx.fillStyle = 'rgba(255,255,255,.12)';
+      ctx.fillRect(p.x - 4, p.y - 1, 8, 2);
+    }
+  }
+}
+
 export function drawTraps(ctx, game) {
   const S = getSkin(game);
   for (const tr of game.traps) {

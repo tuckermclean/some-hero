@@ -19,10 +19,27 @@ export function drawNpc(ctx, n, game) {
   if (n.kind === 'machine') { drawMachine(ctx, n, game, S); return; }
   if (n.kind === 'radio') { drawRadio(ctx, n, game, S); return; }
   shadow(ctx, n.x, n.y + 10, 9);
-  const bob = Math.sin(t * 2 + n.x) * 1.2;
+  // picketers march in unison (shared phase); everyone else bobs alone
+  const bob = Math.sin(n.sign ? t * 2 : t * 2 + n.x) * 1.2;
   ctx.fillStyle = n.col; ctx.fillRect(n.x - 7, n.y - 6 + bob, 14, 16);
   ctx.fillStyle = S.actors.skinTone; ctx.beginPath(); ctx.arc(n.x, n.y - 12 + bob, 7, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = n.hat; ctx.fillRect(n.x - 8, n.y - 18 + bob, 16, 5);
+  if (n.sign) {
+    // the sign: a post from the shoulder, a placard of illegible conviction
+    const tilt = ((n.x % 7) - 3) * 0.04;
+    ctx.save();
+    ctx.translate(n.x + 6, n.y - 14 + bob);
+    ctx.rotate(tilt);
+    ctx.strokeStyle = '#8a7a5c'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(0, -12); ctx.stroke();
+    ctx.fillStyle = S.pal.paper; ctx.fillRect(-11, -24, 22, 13);
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-8, -20); ctx.lineTo(8, -20);
+    ctx.moveTo(-8, -16); ctx.lineTo(4, -16);
+    ctx.stroke();
+    ctx.restore();
+  }
   if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
     ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
     ctx.fillText('!', n.x - 2, n.y - 26 + Math.sin(t * 4) * 2);

@@ -18,7 +18,7 @@ export function createGame({ rng = Math.random } = {}) {
     world: null,
     enemies: [], npcs: [], pickups: [], parts: [],
     boss: null,
-    blocks: [], plates: [], torches: [], traps: [], puzzle: null,
+    blocks: [], plates: [], torches: [], traps: [], props: [], puzzle: null,
     pushCd: 0,
     input: { atkBuf: 0 },
     cam: { x: 0, y: 0 },
@@ -36,7 +36,7 @@ export function createGame({ rng = Math.random } = {}) {
 export function newRun(game) {
   game.zone = 'ow'; game.floorNum = 0; game.deepest = 0; game.owSave = null;
   game.floorCache = {};
-  game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.puzzle = null; game.pushCd = 0;
+  game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.props = []; game.puzzle = null; game.pushCd = 0;
   game.world = generateOverworld(game.rng);
   const s = spawnOverworld(game.world, game.rng);
   game.enemies = s.enemies; game.boss = s.boss; game.npcs = s.npcs;

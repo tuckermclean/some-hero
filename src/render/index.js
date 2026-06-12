@@ -2,7 +2,7 @@
 
 import { VH } from '../constants.js';
 import { drawTiles } from './tiles.js';
-import { drawBlocks, drawTorches, drawTraps, drawPickups } from './objects.js';
+import { drawBlocks, drawTorches, drawTraps, drawProps, drawPickups } from './objects.js';
 import { drawNpc, drawEnemy, drawBoss, drawPlayer } from './actors.js';
 import { drawLantern } from './lighting.js';
 import { getSkin } from './skins/index.js';
@@ -22,6 +22,7 @@ export function render(ctx, game, screen) {
 
   drawTiles(ctx, game, { w: viewW, h: VH });
   drawTraps(ctx, game);
+  drawProps(ctx, game);
   drawBlocks(ctx, game);
   drawTorches(ctx, game);
   drawPickups(ctx, game);
