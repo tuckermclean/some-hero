@@ -55,6 +55,10 @@ const ledger = () => page.evaluate(() => document.getElementById('splashLedger')
 const dlgName = () => page.evaluate(() => document.getElementById('dlgName').innerText);
 const dlgText = () => page.evaluate(() => document.getElementById('dlgText').innerText);
 const toast = () => page.evaluate(() => document.getElementById('toast').innerText);
+// toasts queue now — wait for the one we mean instead of reading whatever's up
+const waitToast = re => page.waitForFunction(
+  src => new RegExp(src).test(document.getElementById('toast').innerText),
+  re.source, { timeout: 9000 });
 const quest = () => page.evaluate(() => document.getElementById('quest').innerText);
 const G = () => page.evaluate(() => {
   const { game } = window.__sh;
@@ -147,14 +151,14 @@ try {
   await page.waitForTimeout(200);
   await page.evaluate(() => { window.__sh.game.player.x += 36; });
   await page.waitForTimeout(350);
-  assert.match(await toast(), /CLICK\. No dart\. INCIDENT #1 OF 2/);
+  await waitToast(/CLICK\. No dart\. INCIDENT #1 OF 2/);
   assert.match(await quest(), /incidents 1 \/ 2/);
   await shot('06-trap-counter');
   step('stepping on a dartless trap files an incident');
 
   await page.evaluate(() => { window.__sh.game.player.x += 36; });
   await page.waitForTimeout(350);
-  assert.match(await toast(), /INCIDENT QUOTA MET \(2\/2\)/);
+  await waitToast(/INCIDENT QUOTA MET \(2\/2\)/);
   assert.equal(await page.evaluate(() => window.__sh.game.puzzle.solved), true);
   step('the quota opens the seal');
 
@@ -196,7 +200,7 @@ try {
   assert.equal((await G()).zone, 'tomb');
   await page.mouse.click(500, 120); await page.waitForTimeout(500);
   assert.deepEqual(await G(), { zone: 'ow', state: 1, floor: 0 });
-  assert.match(await toast(), /Daylight\. Depth record: 1\. Run grade: [SABCDF]/);
+  await waitToast(/Daylight\. Depth record: 1\. Run grade: [SABCDF]/);
   await shot('08-daylight-after-customs');
   step('declaring releases you into daylight, graded');
 
