@@ -23,6 +23,8 @@ import { chromium } from 'playwright';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const SHOTS = join(ROOT, 'tests/e2e/shots');
+const TARGET = process.env.E2E_TARGET;              // e.g. 'dist/some-hero.html'
+const PAGE   = TARGET ? `/${TARGET}?test` : '/?test';
 await mkdir(SHOTS, { recursive: true });
 
 // ---------- a tiny static server (no dependencies) ----------
@@ -77,7 +79,7 @@ let steps = 0;
 const step = name => console.log('  ✓ ' + (++steps + '').padStart(2) + ' ' + name);
 
 try {
-  await page.goto(`http://localhost:${port}/?test`);
+  await page.goto(`http://localhost:${port}${PAGE}`);
 
   // ---------- the splash ----------
   await page.waitForTimeout(8200);   // full timeline: stamp 5.2s, press 6.4s, note 7s
@@ -105,10 +107,9 @@ try {
   step('clicking the screen is, correctly, not a key');
 
   // the first gesture already happened — the band must be playing by now
-  const audio = await page.evaluate(async () => {
-    const sfx = await import('./src/audio/sfx.js');
-    const music = await import('./src/audio/music.js');
-    return { ac: sfx.getAC().state, master: sfx.masterOut().gain.value, ...music.musicDebug() };
+  const audio = await page.evaluate(() => {
+    const { getAC, masterOut, musicDebug } = window.__sh;
+    return { ac: getAC().state, master: masterOut().gain.value, ...musicDebug() };
   });
   assert.equal(audio.ac, 'running', 'the AudioContext resumed on the first key');
   assert.equal(audio.master, 1, 'unmuted');
@@ -290,11 +291,15 @@ try {
   await page.getByText('Floor 12').click();
   await page.waitForTimeout(1500);
   assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 12 });
-  for (const t of ['ledger-lightning-bolt', 'audit-microwave', 'factory-synesthesia',
-                   'performance-review', 'apocalypse-cancel']) {
-    assert.equal(fetchedTracks[t], 200, t + ' fetched by its zone (sources pre-load even out of earshot)');
+  if (!TARGET) {
+    for (const t of ['ledger-lightning-bolt', 'audit-microwave', 'factory-synesthesia',
+                     'performance-review', 'apocalypse-cancel']) {
+      assert.equal(fetchedTracks[t], 200, t + ' fetched by its zone (sources pre-load even out of earshot)');
+    }
+    step('the OST: title, topside radio, breakroom radio, the review, the apocalypse — all sourced');
+  } else {
+    step('the OST: audio wiring confirmed via source e2e (inlined data: URIs emit no network response)');
   }
-  step('the OST: title, topside radio, breakroom radio, the review, the apocalypse — all sourced');
 
   await page.click('#cheatBtn');
   await page.locator('#cheatPanel button', { hasText: 'God' }).click();

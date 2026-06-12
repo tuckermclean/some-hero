@@ -4,8 +4,8 @@ import { ST, T, VH, VIL } from './constants.js';
 import { createGame, newRun } from './core/game.js';
 import { updateGame } from './core/update.js';
 import { makeEffects } from './core/effects.js';
-import { playSfx, setMuted, isMuted, getAC } from './audio/sfx.js';
-import { updateMusic, onTitleBeat } from './audio/music.js';
+import { playSfx, setMuted, isMuted, getAC, masterOut } from './audio/sfx.js';
+import { updateMusic, onTitleBeat, musicDebug } from './audio/music.js';
 import { loadMeta, saveMeta } from './core/save.js';
 import { makeHud } from './ui/hud.js';
 import { makeToast } from './ui/toast.js';
@@ -259,7 +259,7 @@ function loop(now) {
 }
 
 // e2e handle (tests/e2e): exposed only when the page is loaded with ?test
-if (new URLSearchParams(location.search).has('test')) window.__sh = { game, fx };
+if (new URLSearchParams(location.search).has('test')) window.__sh = { game, fx, getAC, masterOut, musicDebug };
 
 // menu backdrop: a generated world behind the title
 newRun(game);
