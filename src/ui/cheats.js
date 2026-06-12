@@ -69,7 +69,7 @@ export function makeCheats(game, fx, { skins } = {}) {
     fx.toast('Backstory notarized; debt crippling. The golem will be pleased. He won’t show it.');
   });
   btn(r, '+100 gold', () => { game.player.gold += 100; fx.hudChanged(); });
-  btn(r, 'Sword III', () => { game.player.swordLv = 3; fx.hudChanged(); });
+  btn(r, 'Sword MAX', () => { game.player.swordLv = 4; fx.hudChanged(); });
   btn(r, '+5 Glurp', () => { game.player.potions += 5; fx.hudChanged(); });
   btn(r, '+1 menace', () => {
     addMenace(game.meta, 'Playtester behavior. Documented.');

@@ -22,7 +22,7 @@ export function handleStairs(game, fx) {
   if (v === TL.SD) {
     if (game.zone === 'ow') {
       // the Door Golem of Credential Verification
-      const missing = missingCredentials(game.meta);
+      const missing = missingCredentials(game.meta, game.player.swordLv);
       if (missing.length) { fx.onGolemEntry(missing); return false; }
       if (!game.meta.golemApproved) {
         game.meta.golemApproved = true;

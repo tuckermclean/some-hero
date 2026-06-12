@@ -13,7 +13,9 @@ export function villageNpcs() {
     // ambient residents: one bit each, defended forever
     { name: 'Docent Brell',     x: (VIL.x + 4) * T,   y: (VIL.y + 1.5) * T, col: '#7a4a6e', hat: '#c9a227' },
     { name: 'King Pfilbert',    x: (VIL.x - 4) * T,   y: (VIL.y + 1) * T,   col: '#5e3a8f', hat: '#e0b73d' },
-    { name: 'Safety Officer Dimwald', x: (VIL.x - 1.5) * T, y: (VIL.y + 4) * T, col: '#d97b29', hat: '#eeeeee' }
+    { name: 'Safety Officer Dimwald', x: (VIL.x - 1.5) * T, y: (VIL.y + 4) * T, col: '#d97b29', hat: '#eeeeee' },
+    // away from the group, on purpose, with inventory
+    { name: 'Hermit Gorse', x: (VIL.x - 9) * T, y: (VIL.y - 1) * T, col: '#6e6a52', hat: '#8a8f76' }
   ];
 }
 

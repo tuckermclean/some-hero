@@ -39,7 +39,7 @@ test('heart heals but never overheals', () => {
   assert.equal(game.player.hp, 10);
 });
 
-test('potion stocks up; maxheart raises the cap; sword upgrades to tier 3', () => {
+test('potion stocks up; maxheart raises the cap; sword upgrades to sun-steel (tier 4)', () => {
   const game = blankGame(), fx = spyFx();
   put(game, 'potion', 5);
   put(game, 'maxheart', 5, 2);
@@ -47,7 +47,7 @@ test('potion stocks up; maxheart raises the cap; sword upgrades to tier 3', () =
   updatePickups(game, 1 / 60, fx);
   assert.equal(game.player.potions, 2);
   assert.equal(game.player.maxhp, 12);
-  assert.equal(game.player.swordLv, 3);
+  assert.equal(game.player.swordLv, 4);
   assert.equal(fx.count('toast'), 2);  // maxheart + sword
 });
 

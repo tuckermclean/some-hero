@@ -113,7 +113,7 @@ test('every grade has a remark and the remarks are in house style', () => {
 });
 
 test('lootLine goes ALL CAPS about THE GOOD KIND', () => {
-  assert.match(lootLine('sword'), /DIRK/);
+  assert.match(lootLine('sword'), /SUN-STEEL/);
   assert.match(lootLine('amulet'), /44,107/);
   assert.equal(lootLine('gold'), '');
 });

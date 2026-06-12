@@ -114,6 +114,7 @@ try {
     const { game } = window.__sh;
     game.meta.credentials.backstory = true;
     game.meta.credentials.debt = true;
+    game.player.swordLv = 1;   // the golem checks your hands
     const T = 36;
     const tx = Math.floor(game.player.x / T) + 2, ty = Math.floor(game.player.y / T);
     game.world.map[ty * game.world.w + tx] = 12;   // TL.SD: a trapdoor

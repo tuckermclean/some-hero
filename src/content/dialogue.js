@@ -16,7 +16,8 @@ export function talkTo(n, game, dialog, fx) {
     if (quest.stage === 0) dialog.say(n.name, [
       hespethLine(meta.deaths),
       'TICKET #44,107. "Go downstairs and cancel the apocalypse. Should be quick." *stamp*',
-      'Before the Guild insures you for the Downstairs, prove you can handle pests. Five of the geese. Legally they are not pests — they are "an ongoing incident." Stampathy believes in you. Stampathy is a stamp.'
+      'Before the Guild insures you for the Downstairs, prove you can handle pests. Five of the geese. Legally they are not pests — they are "an ongoing incident." Stampathy believes in you. Stampathy is a stamp.',
+      'The Guild does not issue weapons. Budget. There\'s a fellow in the west meadow with… opinions about sticks. I\'d go see him before you go see a goose.'
     ], () => { startHunt(quest); fx.questChanged(); });
     else if (quest.stage === 1) dialog.say(n.name, [
       'The geese. ' + (quest.need - quest.kills) + ' more. You won\'t have to find them. That is the one mercy of geese. I have prepared the stamp.'
@@ -81,7 +82,7 @@ export function talkTo(n, game, dialog, fx) {
   } else if (n.name === 'Gift Shop Gnoll') {
     dialog.say(n.name, ['\u{1F3B5} GLURP! It\'s adventure fluid! \u{1F3B5} \u2014 sorry. It loops. What do you need?'], () => {
       dialog.setSpeaker(n.name);
-      dialog.setText('GLURP\u2122 20g ("Now With Fewer Eels!") \u00B7 DIRK!\u2122 60g ("It\'s basically a sword!")');
+      dialog.setText('GLURP\u2122 20g ("Now With Fewer Eels!") \u00B7 DIRK!\u2122 60g ("It\'s basically a sword!") \u00B7 DIRK! ULTRA\u2122 400g ("Engineered.")');
       dialog.open();
       dialog.choice([
         { label: '\u{1F9EA} GLURP\u2122 \u00B7 20g', fn: () => {
@@ -93,12 +94,21 @@ export function talkTo(n, game, dialog, fx) {
           dialog.showHint();
         }},
         { label: '\u2694 DIRK!\u2122 \u00B7 60g', fn: () => {
-          if (player.swordLv > 1) dialog.setText('You already have a DIRK! or better. Brand loyalty. The mascot salutes you. He has arms. Don\'t ask.');
+          if (player.swordLv >= 2) dialog.setText('You already have a DIRK! or better. Brand loyalty. The mascot salutes you. He has arms. Don\'t ask.');
           else if (player.gold >= 60) {
             player.gold -= 60; player.swordLv = 2;
             fx.sfx('level'); fx.hudChanged();
             dialog.setText('DIRK! It\'s basically a sword! That\'s the whole slogan. Legal made us keep "basically."');
           } else dialog.setText('Sixty gold. The mascot does not haggle. The mascot is a dirk with arms.');
+          dialog.showHint();
+        }},
+        { label: '\u2694 DIRK! ULTRA\u2122 \u00B7 400g', fn: () => {
+          if (player.swordLv >= 3) dialog.setText('You already swing ULTRA-class or better. The engineers send their regards. All nine of them.');
+          else if (player.gold >= 400) {
+            player.gold -= 400; player.swordLv = 3;
+            fx.sfx('level'); fx.hudChanged();
+            dialog.setText('DIRK! ULTRA. Engineered composite. "Basically a better sword." The materials data sheet is included. It\'s laminated. Hespeth did that.');
+          } else dialog.setText('Four hundred gold. It\'s engineered. You\'re paying for the word "engineered."');
           dialog.showHint();
         }},
         { label: '\u{1F4B3} GLURP\u2122 on credit', fn: () => {
@@ -118,6 +128,23 @@ export function talkTo(n, game, dialog, fx) {
         }}
       ]);
     });
+
+  } else if (n.name === 'Hermit Gorse') {
+    if (player.swordLv < 1) {
+      dialog.say(n.name, [
+        'You\'ve got the hands of someone who slaps geese. Don\'t. They keep score.',
+        'Here. Take Pointy. Family blade. Forged— well. Grown. Found, technically. She\'s seen things.',
+        'She\'ll return to me when her quest is done. They always do. That\'s how sticks work.'
+      ], () => {
+        player.swordLv = Math.max(player.swordLv, 1);
+        fx.sfx('level'); fx.hudChanged();
+        fx.toast('Acquired: Pointy (a pointy stick). She\'s seen things.');
+      });
+    } else {
+      dialog.say(n.name, [
+        'How\'s Pointy? Don\'t answer. I\'d know if something happened. The birch would tell me. The birch tells me everything.'
+      ]);
+    }
 
   } else if (n.name === 'Docent Brell') {
     dialog.say(n.name, [

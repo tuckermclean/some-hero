@@ -230,15 +230,18 @@ export function drawPlayer(ctx, game) {
   ctx.fillStyle = A.playerAccent; ctx.fillRect(p.x + 4, p.y - 16, 4, 5);
   ctx.fillStyle = A.eye;
   const ex = p.x + p.fx * 3; ctx.fillRect(ex - 3, p.y - 12, 2, 3); ctx.fillRect(ex + 1, p.y - 12, 2, 3);
-  // sword swing
+  // swing: a sword arc, or — tier 0 — a short, honest whap
   if (p.atkT > 0.14) {
     const fm = Math.hypot(p.fx, p.fy) || 1, fx = p.fx / fm, fy = p.fy / fm;
     const prog = 1 - (p.atkT - 0.14) / 0.2;
     const a0 = Math.atan2(fy, fx) - 1.2 + prog * 2.4;
-    ctx.strokeStyle = p.swordLv > 1 ? A.swordUp : A.sword; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(p.x + Math.cos(a0) * 10, p.y - 4 + Math.sin(a0) * 10);
-    ctx.lineTo(p.x + Math.cos(a0) * 30, p.y - 4 + Math.sin(a0) * 30); ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 8;
-    ctx.beginPath(); ctx.arc(p.x, p.y - 4, 26, a0 - .5, a0 + .1); ctx.stroke();
+    if (p.swordLv >= 1) {
+      ctx.strokeStyle = p.swordLv > 1 ? A.swordUp : A.sword; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p.x + Math.cos(a0) * 10, p.y - 4 + Math.sin(a0) * 10);
+      ctx.lineTo(p.x + Math.cos(a0) * 30, p.y - 4 + Math.sin(a0) * 30); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = p.swordLv >= 1 ? 8 : 6;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(p.x, p.y - 4, p.swordLv >= 1 ? 26 : 16, a0 - .5, a0 + .1); ctx.stroke();
   }
 }

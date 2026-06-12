@@ -7,6 +7,7 @@ import { addMenace } from '../core/meta.js';
 import { ledgerize } from '../systems/ledger.js';
 
 const CRED_LINES = {
+  sword: 'Sword-shaped object: NOT DETECTED. The golem has checked both of your hands. Twice. A man in the west meadow has\u2026 inventory.',
   backstory: 'Tragic backstory: NOT ON FILE. Must be notarized. Clerk Hespeth stamps; the Ledger writes. The Ledger is\u2026 available. Unfortunately.',
   debt: 'Crippling debt: NONE DETECTED. The golem is concerned. Adventurers without debt have options. Options are dangerous. The gift shop extends credit.'
 };

@@ -156,7 +156,7 @@ export function gradeRemark(grade) {
 /** Loot the Ledger considers EXTREMELY THE GOOD KIND. */
 export function lootLine(kind) {
   return ledgerize({
-    sword: 'A DIRK! BRAND SWORD. EXTREMELY THE GOOD KIND. (It\'s basically a sword!)',
+    sword: 'SUN-STEEL. AN ACTUAL SWORD. EXTREMELY THE GOOD KIND. The Ledger is pressing very hard with the pen.',
     maxheart: 'CONSTITUTION INCREASE. The Ledger has underlined it twice.',
     amulet: 'TICKET #44,107: STAMPED. The Ledger is doing a voice. It is the same voice.'
   }[kind] || '');

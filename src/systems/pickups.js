@@ -46,7 +46,7 @@ function collect(game, pk, fx) {
       fx.sfx('level'); fx.toast(lootLine('maxheart'));
       break;
     case 'sword':
-      p.swordLv = 3;
+      p.swordLv = Math.max(p.swordLv, 4);
       fx.sfx('level'); fx.toast(lootLine('sword'));
       break;
     case 'guestbook':

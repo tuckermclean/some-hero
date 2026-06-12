@@ -2,6 +2,9 @@
 
 import { xpNeed } from '../systems/progression.js';
 
+// what's in your hand, per tier (tier 0 is an empty hand; it says nothing)
+const WEAPON_NAMES = ['', 'Pointy', 'DIRK!', 'ULTRA', 'sun-steel'];
+
 export function makeHud(els) {
   const { hpFill, xpFill, statline, btnP, hud, questEl } = els;
   return {
@@ -9,7 +12,7 @@ export function makeHud(els) {
       hpFill.style.width = (player.hp / player.maxhp * 100) + '%';
       xpFill.style.width = (player.xp / xpNeed(player) * 100) + '%';
       statline.textContent = 'Lv ' + player.lv + ' · ' + player.gold + ' g · Day ' + (meta ? meta.day : 1)
-        + (player.swordLv > 1 ? ' · ' + '⚔'.repeat(player.swordLv - 1) : '');
+        + (player.swordLv >= 1 ? ' · ⚔ ' + WEAPON_NAMES[player.swordLv] : '');
       btnP.textContent = '🧪 ' + player.potions;
     },
     setQuestHTML(html) { questEl.innerHTML = html; },

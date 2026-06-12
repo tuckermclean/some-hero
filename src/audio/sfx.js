@@ -30,7 +30,9 @@ export const sfx = {
   ignite: () => beep(680, .16, 'sine', .06, 1250),
   douse:  () => beep(180, .12, 'sine', .03, 90),
   // a dry mechanism clack, then the sad thunk of a dart not arriving
-  click:  () => { beep(1300, .03, 'square', .06); setTimeout(() => beep(220, .05, 'square', .03), 45); }
+  click:  () => { beep(1300, .03, 'square', .06); setTimeout(() => beep(220, .05, 'square', .03), 45); },
+  // an open hand meeting a goose. neither is proud of it
+  slap:   () => beep(240, .06, 'triangle', .05, 140)
 };
 
 export function playSfx(name) {

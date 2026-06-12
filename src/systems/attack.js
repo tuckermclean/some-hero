@@ -18,25 +18,31 @@ export function playerAttack(game, fx) {
   if (game.input.atkBuf <= 0 || p.atkT > 0) return false;
   game.input.atkBuf = 0;
   p.atkT = .34;
-  fx.sfx('swing');
+  const slap = p.swordLv === 0;
+  fx.sfx(slap ? 'slap' : 'swing');
 
   const fm = Math.hypot(p.fx, p.fy) || 1, fxd = p.fx / fm, fyd = p.fy / fm;
   const hx = p.x + fxd * STRIKE_REACH, hy = p.y + fyd * STRIKE_REACH, R = STRIKE_R;
+  // a slap has the reach of a slap, and it does not launch a goose —
+  // full knockback would shove enemies out of their own contact range
+  // every hit, which is what made bare-handed goose abatement safe
+  const Rb = slap ? R - 10 : R;
+  const kb = slap ? 56 : 140;
 
-  // light braziers
+  // light braziers (full R: lighting a lamp is not a combat reach problem)
   if (game.zone === 'tomb') igniteBraziers(game, hx, hy, R, fx);
 
   // enemies
   for (const e of game.enemies) {
     if (e.dead) continue;
-    if (Math.hypot(e.x - hx, e.y - hy) < R + e.w / 2) {
-      hitEnemy(game, e, swordDmg(p), fxd * 140, fyd * 140, fx);
+    if (Math.hypot(e.x - hx, e.y - hy) < Rb + e.w / 2) {
+      hitEnemy(game, e, swordDmg(p), fxd * kb, fyd * kb, fx);
     }
   }
 
   // boss
   const b = game.boss;
-  if (b && !b.dead && Math.hypot(b.x - hx, b.y - hy) < R + b.w / 2) {
+  if (b && !b.dead && Math.hypot(b.x - hx, b.y - hy) < Rb + b.w / 2) {
     b.hp -= swordDmg(p);
     b.flash = .15;
     fx.sfx('hit');
@@ -65,7 +71,7 @@ export function killBoss(game, fx) {
     for (let i = 0; i < 5; i++) {
       game.pickups.push({ kind: 'gold', x: b.x + (game.rng() - .5) * 50, y: b.y + (game.rng() - .5) * 50, v: 3 });
     }
-    if (game.floorNum >= 4 && game.player.swordLv < 3 && game.rng() < .6) {
+    if (game.floorNum >= 4 && game.player.swordLv < 4 && game.rng() < .6) {
       game.pickups.push({ kind: 'sword', x: b.x, y: b.y + 24, v: 1 });
     }
     fx.toast(b.name === 'the Middle Manager'

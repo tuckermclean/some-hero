@@ -22,19 +22,23 @@ import { seededGame, blankGame, spyFx } from './helpers.js';
 
 // ---------- credentials ----------
 
-test('credentials: both missing at first, grantable, permanent', () => {
+test('credentials: all three missing at first, grantable', () => {
   const game = blankGame();
-  assert.deepEqual(missingCredentials(game.meta), ['backstory', 'debt']);
+  assert.deepEqual(missingCredentials(game.meta, 0), ['sword', 'backstory', 'debt']);
+  assert.deepEqual(missingCredentials(game.meta, 1), ['backstory', 'debt']);
   grantBackstory(game.meta);
-  assert.deepEqual(missingCredentials(game.meta), ['debt']);
+  assert.deepEqual(missingCredentials(game.meta, 1), ['debt']);
   grantDebt(game.meta);
-  assert.deepEqual(missingCredentials(game.meta), []);
+  assert.deepEqual(missingCredentials(game.meta, 1), []);
+  assert.deepEqual(missingCredentials(game.meta, 0), ['sword'], 'the hand is checked every time');
 });
 
-test('swordVerdict approves every tier (any sword-shaped object passes)', () => {
+test('swordVerdict covers every tier (an open hand does not count)', () => {
+  assert.match(swordVerdict(0), /open hand/);
   assert.match(swordVerdict(1), /swordfish/);
   assert.match(swordVerdict(2), /DIRK/);
-  assert.match(swordVerdict(3), /moved/);
+  assert.match(swordVerdict(3), /engineered|materials data sheet/i);
+  assert.match(swordVerdict(4), /moved/);
 });
 
 // ---------- the golem gates the dungeon mouth ----------
@@ -52,7 +56,7 @@ test('uncredentialed entry is DENIED (and is not a zone transition)', () => {
   assert.equal(handleStairs(game, fx), false);
   assert.equal(game.zone, 'ow');
   assert.equal(fx.count('onGolemEntry'), 1);
-  assert.deepEqual(fx.last('onGolemEntry')[1], ['backstory', 'debt']);
+  assert.deepEqual(fx.last('onGolemEntry')[1], ['sword', 'backstory', 'debt']);
   assert.equal(game.meta.runs, 0, 'no run started');
 });
 
@@ -60,6 +64,7 @@ test('credentialed entry: stamp ceremony exactly once, then routine', () => {
   const game = seededGame(21), fx = spyFx();
   game.state = ST.PLAY;
   grantBackstory(game.meta); grantDebt(game.meta);
+  game.player.swordLv = 1;   // Pointy: the third credential
 
   standOnTrapdoor(game);
   // the ceremony plays out BEFORE the descent — the screen must not give

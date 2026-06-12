@@ -5,12 +5,14 @@ import { swordDmg, hurtPlayer, hitEnemy } from '../src/systems/combat.js';
 import { mkEnemy } from '../src/entities/enemy.js';
 import { blankGame, spyFx } from './helpers.js';
 
-test('swordDmg follows the tier + level formula', () => {
-  assert.equal(swordDmg({ swordLv: 1, lv: 1 }), 2);
-  assert.equal(swordDmg({ swordLv: 2, lv: 1 }), 4);
-  assert.equal(swordDmg({ swordLv: 3, lv: 1 }), 6);
+test('swordDmg follows the tier + level formula (slap to sun-steel)', () => {
+  assert.equal(swordDmg({ swordLv: 0, lv: 1 }), 1);  // a slap
+  assert.equal(swordDmg({ swordLv: 1, lv: 1 }), 2);  // Pointy
+  assert.equal(swordDmg({ swordLv: 2, lv: 1 }), 3);  // DIRK!
+  assert.equal(swordDmg({ swordLv: 3, lv: 1 }), 4);  // DIRK! ULTRA
+  assert.equal(swordDmg({ swordLv: 4, lv: 1 }), 6);  // sun-steel
   assert.equal(swordDmg({ swordLv: 1, lv: 3 }), 3);  // +1 per 2 levels past 1
-  assert.equal(swordDmg({ swordLv: 3, lv: 7 }), 9);
+  assert.equal(swordDmg({ swordLv: 4, lv: 7 }), 9);
 });
 
 test('hurtPlayer applies damage, grants i-frames, and is blocked during them', () => {

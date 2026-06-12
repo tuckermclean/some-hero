@@ -84,3 +84,29 @@ test('full swing kill: attack -> dead enemy -> xp + loot', () => {
   assert.ok(game.player.xp > 0);
   assert.ok(game.pickups.length > 0);
 });
+
+test('a slap has the reach of a slap and does not launch a goose', () => {
+  // beyond slap reach (Rb = R-10) but within stick reach
+  const game = blankGame(), fx = spyFx();
+  game.player.swordLv = 0; game.player.fx = 1; game.player.fy = 0;
+  const far = mkEnemy('goose', game.player.x + 24 + 36, game.player.y);
+  game.enemies = [far];
+  bufferAttack(game);
+  playerAttack(game, fx);
+  assert.equal(far.hp, far.maxhp, 'out of slap range');
+
+  game.player.swordLv = 1; game.player.atkT = 0;
+  bufferAttack(game);
+  playerAttack(game, fx);
+  assert.equal(far.hp, far.maxhp - 2, 'Pointy reaches');
+
+  // knockback: a slap shoves at 56, a stick at 140
+  const g2 = blankGame(), fx2 = spyFx();
+  g2.player.swordLv = 0; g2.player.fx = 1; g2.player.fy = 0;
+  const near = mkEnemy('goose', g2.player.x + 30, g2.player.y);
+  g2.enemies = [near];
+  bufferAttack(g2);
+  playerAttack(g2, fx2);
+  assert.equal(near.kbx, 56, 'a whap does not launch a goose');
+  assert.equal(fx2.calls.find(c => c[0] === 'sfx')[1], 'slap');
+});

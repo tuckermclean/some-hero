@@ -7,9 +7,10 @@ import { dropLoot } from './loot.js';
 import { recordPestKill } from './quest.js';
 import { union206Line, internLine } from './ledger.js';
 
-/** Player melee damage from sword tier + level. */
+/** Player melee damage from sword tier + level.
+ *  Tiers: 0 slap, 1 pointy stick, 2 DIRK!, 3 DIRK! ULTRA, 4 sun-steel. */
 export function swordDmg(player) {
-  return [0, 2, 4, 6][player.swordLv] + ((player.lv - 1) >> 1);
+  return [1, 2, 3, 4, 6][player.swordLv] + ((player.lv - 1) >> 1);
 }
 
 /**
