@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test \"tests/**/*.test.js\"",
     "test:e2e": "node tests/e2e/game.e2e.mjs",
+    "build": "node build.js",
     "start": "npx --yes serve@latest -l 3000 ."
   },
   "license": "MIT",
