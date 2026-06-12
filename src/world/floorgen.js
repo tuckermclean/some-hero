@@ -177,9 +177,10 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
   // ---- pinned-room content ----
   for (const r of pinnedRooms) {
     if (r.tag === 'breakroom') {
-      // the imp break area: a guaranteed Glurp cache. Mundane container,
-      // insane contents.
-      pickups.push({ kind: 'potion', x: r.cx * T + T / 2, y: r.cy * T + T / 2, v: 1 });
+      // the imp break area: the GLURP-O-MATIC lives here (placed as an NPC
+      // by applyFloor); somebody left a couple of loose ones beside it
+      pickups.push({ kind: 'potion', x: r.cx * T + T / 2 - 14, y: r.cy * T + T / 2 + 16, v: 1 });
+      pickups.push({ kind: 'potion', x: r.cx * T + T / 2 + 16, y: r.cy * T + T / 2 + 14, v: 1 });
     }
     if (r.tag === 'gap') {
       // MIND THE GAP. The gap has a guestbook. Sign it.

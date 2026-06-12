@@ -7,6 +7,7 @@
 import { startHunt, claimReward } from '../systems/quest.js';
 import { hespethLine } from './hespeth.js';
 import { grantBackstory } from '../systems/credentials.js';
+import { addMenace } from '../core/meta.js';
 import { ledgerize } from '../systems/ledger.js';
 import { canBorrow, borrow, payDown, aprFor, tierName, creditLimit, minPayment, truthInLending } from '../systems/credit.js';
 
@@ -180,6 +181,53 @@ export function talkTo(n, game, dialog, fx) {
       ? ['\u{1F3B5} GLURP! It\'s adventure fluid! \u{1F3B5} \u2014 and WONDERFUL news! Your score pre-qualifies you for the GnollCard\u2122 Preferred at 9.99% APR. I am contractually thrilled. What do you need?']
       : ['\u{1F3B5} GLURP! It\'s adventure fluid! \u{1F3B5} \u2014 sorry. It loops. What do you need?'];
     dialog.say(n.name, greeting, mainMenu);
+
+  } else if (n.name === 'GLURP-O-MATIC') {
+    const greeting = meta.credit.score >= 750
+      ? ['THE GLURP-O-MATIC HUMS. The display scrolls: "WELCOME, PREFERRED ADVENTURER. PRE-QUALIFIED. 9.99% APR. THE MACHINE KNOWS YOUR NAME."']
+      : ['THE GLURP-O-MATIC HUMS. GLURP™: 20 g. The coin slot has seen things. (See label.)'];
+    dialog.say(n.name, greeting, () => {
+      dialog.setSpeaker(n.name);
+      dialog.setText('GLURP™ — 20 g. "Now With Fewer Eels!" The tray is sticky. That is a feature.');
+      dialog.open();
+      dialog.choice([
+        { label: '\u{1F9EA} Insert 20 g', fn: () => {
+          if (player.gold >= 20) {
+            player.gold -= 20; player.potions++;
+            fx.sfx('coin'); fx.hudChanged();
+            dialog.setText('CLUNK. One Glurp. The machine plays 0.5 seconds of the jingle. It is enough.');
+          } else dialog.setText('The display reads: "EXACT CHANGE ONLY." You do not have inexact change either.');
+          dialog.showHint();
+        }},
+        { label: '\u{1F4B3} On credit', fn: () => {
+          const v = canBorrow(meta, 20);
+          if (!v.ok) dialog.setText('The display reads: "' + declineText(v.reason, meta) + '"');
+          else {
+            borrow(meta, 20); player.potions++;
+            fx.sfx('coin'); fx.hudChanged();
+            dialog.setText('CLUNK. Financed at ' + pct(aprFor(meta.credit.score)) + ' APR. Balance: ' +
+              meta.credit.balance + ' g. The machine prints a receipt. The receipt is the long kind.');
+          }
+          dialog.showHint();
+        }},
+        { label: '\u{1F9B5} KICK IT', fn: () => {
+          addMenace(meta, 'Kicked a vending machine. It was witnessed.');
+          if (game.rng() < .25) {
+            player.potions++;
+            fx.sfx('coin'); fx.hudChanged();
+            dialog.setText('Something clunks. A Glurp drops. The machine says nothing. It will remember.');
+          } else {
+            fx.sfx('push');
+            dialog.setText('The machine absorbs the kick. The display flickers: "DECLINED." The incident has been documented. By the machine.');
+          }
+          dialog.showHint();
+        }},
+        { label: 'Walk away', fn: () => {
+          dialog.setText('\u{1F3B5} …if you\'re hurt or sad or cursed or dead-ish… \u{1F3B5} The machine hums it slower down here.');
+          dialog.showHint();
+        }}
+      ]);
+    });
 
   } else if (n.name === 'Hermit Gorse') {
     if (player.swordLv < 1) {

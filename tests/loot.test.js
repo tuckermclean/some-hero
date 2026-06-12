@@ -29,3 +29,11 @@ test('bonus drop is heart ~10%, potion ~6%, nothing otherwise', () => {
   assert.ok(hearts / n > 0.07 && hearts / n < 0.13, `heart rate ${hearts / n}`);
   assert.ok(potions / n > 0.03 && potions / n < 0.09, `potion rate ${potions / n}`);
 });
+
+test('the dungeon drops no heals: gold only (Glurp is the only medicine down there)', () => {
+  const pickups = [];
+  // a seed sweep would hit the 10%/6% branches topside; in the dungeon, never
+  for (let s = 0; s < 60; s++) dropLoot(pickups, 0, 0, mulberry32(s), true);
+  assert.ok(pickups.length >= 60, 'gold still scatters');
+  assert.ok(pickups.every(p => p.kind === 'gold'), 'no hearts, no potions');
+});

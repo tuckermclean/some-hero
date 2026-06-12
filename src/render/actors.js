@@ -15,11 +15,38 @@ export function shadow(ctx, x, y, r) {
 export function drawNpc(ctx, n, game) {
   const S = getSkin(game);
   const t = game.t, player = game.player;
+  if (n.kind === 'machine') { drawMachine(ctx, n, game, S); return; }
   shadow(ctx, n.x, n.y + 10, 9);
   const bob = Math.sin(t * 2 + n.x) * 1.2;
   ctx.fillStyle = n.col; ctx.fillRect(n.x - 7, n.y - 6 + bob, 14, 16);
   ctx.fillStyle = S.actors.skinTone; ctx.beginPath(); ctx.arc(n.x, n.y - 12 + bob, 7, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = n.hat; ctx.fillRect(n.x - 8, n.y - 18 + bob, 16, 5);
+  if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
+    ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
+    ctx.fillText('!', n.x - 2, n.y - 26 + Math.sin(t * 4) * 2);
+  }
+}
+
+/** The GLURP-O-MATIC: lit front, rows of visible bottles. Unmissable. */
+function drawMachine(ctx, n, game, S) {
+  const t = game.t, player = game.player;
+  shadow(ctx, n.x, n.y + 16, 13);
+  // glow — a beacon of commerce in the institutional dark
+  const g = ctx.createRadialGradient(n.x, n.y, 4, n.x, n.y, 46);
+  g.addColorStop(0, 'rgba(116,196,184,' + (.18 + .05 * Math.sin(t * 2)) + ')');
+  g.addColorStop(1, 'rgba(116,196,184,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(n.x, n.y, 46, 0, Math.PI * 2); ctx.fill();
+  // cabinet
+  ctx.fillStyle = '#2e3640'; ctx.fillRect(n.x - 12, n.y - 18, 24, 34);
+  ctx.fillStyle = '#74c4b8'; ctx.fillRect(n.x - 10, n.y - 16, 16, 26);   // lit front
+  // the merchandise (the ass-ton, on display)
+  ctx.fillStyle = '#2e8f83';
+  for (let row = 0; row < 4; row++) for (let col = 0; col < 3; col++) {
+    ctx.fillRect(n.x - 8 + col * 5, n.y - 14 + row * 6, 3, 4);
+  }
+  ctx.fillStyle = '#1d242c'; ctx.fillRect(n.x + 7, n.y - 16, 4, 26);     // coin column
+  ctx.fillStyle = '#e7c95c'; ctx.fillRect(n.x + 8, n.y - 12, 2, 3);      // coin slot
+  ctx.fillStyle = '#1d242c'; ctx.fillRect(n.x - 10, n.y + 11, 18, 4);    // dispenser tray
   if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
     ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
     ctx.fillText('!', n.x - 2, n.y - 26 + Math.sin(t * 4) * 2);

@@ -64,7 +64,7 @@ export function hitEnemy(game, e, dmg, kx, ky, fx) {
       fx.toast(union206Line());
     }
     gainXp(game, e.xpv, fx);
-    dropLoot(game.pickups, e.x, e.y, game.rng);
+    dropLoot(game.pickups, e.x, e.y, game.rng, game.zone === 'tomb');
     if (e.kind === 'goose' && recordPestKill(game.quest)) fx.questChanged();
   }
 }

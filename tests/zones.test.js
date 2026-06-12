@@ -14,7 +14,10 @@ test('enterTomb stashes the overworld and lands on floor 1', () => {
   assert.equal(game.zone, 'tomb');
   assert.equal(game.floorNum, 1);
   assert.equal(game.deepest, 1);
-  assert.equal(game.npcs.length, 0);
+  // the only resident down here is the vending machine
+  assert.equal(game.npcs.length, 1);
+  assert.equal(game.npcs[0].name, 'GLURP-O-MATIC');
+  assert.equal(game.npcs[0].kind, 'machine');
   assert.notEqual(game.world, owWorld);
   assert.equal(game.owSave.world, owWorld);
   assert.equal(game.owSave.enemies, owEnemies);

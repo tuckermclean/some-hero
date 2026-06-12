@@ -30,6 +30,11 @@ export function applyFloor(game, f) {
   game.enemies = g.enemies; game.pickups = g.pickups; game.parts = [];
   game.blocks = g.blocks; game.plates = g.plates; game.torches = g.torches;
   game.traps = g.traps; game.puzzle = g.puzzle; game.boss = g.boss;
+  // the break room's vending machine is an NPC: TALK to it. it's fine.
+  const breakroom = g.pinnedRooms.find(r => r.tag === 'breakroom');
+  game.npcs = breakroom
+    ? [{ name: 'GLURP-O-MATIC', kind: 'machine', x: breakroom.cx * T + T / 2, y: breakroom.cy * T + T / 2 - 8 }]
+    : [];
   game.player.x = g.spawn.cx * T + T / 2;
   game.player.y = g.spawn.cy * T + T / 2;
   game.player.tk = g.spawn.cx + ',' + g.spawn.cy;
