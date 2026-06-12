@@ -8,6 +8,7 @@ import * as dbg from '../systems/debug.js';
 import { grantBackstory, grantDebt } from '../systems/credentials.js';
 import { addMenace, createMeta } from '../core/meta.js';
 import { wipeSave } from '../core/save.js';
+import { newRun } from '../core/game.js';
 
 const SEAL_CYCLE = [null, 'key', 'plates', 'torch', 'riddle', 'traps', 'warden'];
 
@@ -76,6 +77,7 @@ export function makeCheats(game, fx, { skins } = {}) {
     addMenace(game.meta, 'Playtester behavior. Documented.');
     fx.toast('The golem writes something in his little book.');
   });
+  btn(r, 'Grant triangle', () => { dbg.grantHeist(game, fx); });
 
   // ---- SET ----
   head('SET');
@@ -112,6 +114,13 @@ export function makeCheats(game, fx, { skins } = {}) {
   btn(r, 'Die now', () => { api.close(); dbg.dieNow(game, fx); });
   btn(r, 'Customs 12g', () => { api.close(); dbg.triggerCustoms(game, fx); });
   btn(r, 'Win (topside)', () => { api.close(); dbg.triggerWin(game, fx); });
+  btn(r, 'Kill boss', () => { api.close(); dbg.killBossNow(game, fx); });
+  btn(r, 'New Game+', () => {
+    api.close();
+    game.meta.owner = true; game.meta.cancelled = false;
+    newRun(game); fx.hudChanged(); fx.questChanged();
+    fx.toast('Ownership transferred. The monsters will call you "boss." Hespeth: "Oh no. Sir."');
+  });
   btn(r, 'Wipe save', () => {
     wipeSave();
     game.meta = createMeta();

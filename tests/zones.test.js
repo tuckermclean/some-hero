@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, TL } from '../src/constants.js';
+import { T, TL, FINAL_FLOOR } from '../src/constants.js';
 import { enterTomb, exitTomb, descend, ascend } from '../src/world/zones.js';
 import { handleStairs } from '../src/systems/stairs.js';
 import { seededGame, blankGame, spyFx } from './helpers.js';
@@ -168,6 +168,49 @@ test('a slain warden stays slain for the rest of the day', () => {
   ascend(game, fx);                                         // floor 3
   descend(game, fx);                                        // back to 4
   assert.equal(game.boss.dead, true, 'the performance review stays concluded');
+});
+
+test('descend is capped at the final floor: cannot go deeper', () => {
+  const game = seededGame(99), fx = spyFx();
+  enterTomb(game, fx);
+  // jump to just before the final floor
+  while (game.floorNum < FINAL_FLOOR - 1) descend(game, spyFx());
+  assert.equal(game.floorNum, FINAL_FLOOR - 1);
+  descend(game, fx);   // lands on FINAL_FLOOR
+  assert.equal(game.floorNum, FINAL_FLOOR);
+  descend(game, fx);   // should be a no-op
+  assert.equal(game.floorNum, FINAL_FLOOR, 'cap: cannot descend past FINAL_FLOOR');
+});
+
+test('the final floor: puzzle type final, Origenal Hero boss, no SD tile, desk NPC', () => {
+  const game = seededGame(100), fx = spyFx();
+  enterTomb(game, fx);
+  while (game.floorNum < FINAL_FLOOR) descend(game, spyFx());
+  assert.equal(game.floorNum, FINAL_FLOOR);
+  assert.equal(game.puzzle.type, 'final');
+  assert.equal(game.puzzle.bossDead, false);
+  assert.ok(game.boss, 'Origenal Hero present');
+  assert.equal(game.boss.name, 'the Origenal Hero');
+  assert.equal(game.world.map.filter(v => v === TL.SD).length, 0, 'no down-stairs');
+  const desk = game.npcs.find(n => n.kind === 'desk');
+  assert.ok(desk, 'Cancellation Desk NPC present');
+  assert.equal(desk.name, 'Cancellation Desk');
+});
+
+test('bossDead flag on the final floor survives ascend and revisit', () => {
+  const game = seededGame(101), fx = spyFx();
+  enterTomb(game, fx);
+  while (game.floorNum < FINAL_FLOOR) descend(game, spyFx());
+  // mark the boss dead
+  game.boss.dead = true;
+  game.puzzle.bossDead = true;
+  // go up one floor and come back
+  ascend(game, spyFx());
+  assert.equal(game.floorNum, FINAL_FLOOR - 1);
+  descend(game, fx);
+  assert.equal(game.floorNum, FINAL_FLOOR);
+  assert.equal(game.boss.dead, true, 'boss stays dead on revisit');
+  assert.equal(game.puzzle.bossDead, true, 'bossDead flag persists');
 });
 
 test('revisited floors say so', () => {

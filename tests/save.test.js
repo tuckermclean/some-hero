@@ -79,3 +79,38 @@ test('wipeSave forgets; the Ledger pretends not to mind', () => {
   wipeSave(s);
   assert.equal(s.getItem(SAVE_KEY), null);
 });
+
+test('heist tokens survive a round-trip', () => {
+  const s = memStorage();
+  const meta = createMeta();
+  meta.heist.skull = true;
+  saveMeta(meta, s);
+  const loaded = loadMeta(s);
+  assert.equal(loaded.heist.skull, true);
+  assert.equal(loaded.heist.gregory, false, 'unset tokens default false');
+  assert.equal(loaded.heist.signature, false);
+});
+
+test('old save lacking heist gains all-false defaults', () => {
+  const s = memStorage();
+  const old = createMeta();
+  delete old.heist;
+  delete old.cancelled;
+  delete old.owner;
+  s.setItem(SAVE_KEY, JSON.stringify({ v: 1, meta: old }));
+  const loaded = loadMeta(s);
+  assert.deepEqual(loaded.heist, { skull: false, gregory: false, signature: false });
+  assert.equal(loaded.cancelled, false);
+  assert.equal(loaded.owner, false);
+});
+
+test('cancelled and owner scalar flags survive a round-trip', () => {
+  const s = memStorage();
+  const meta = createMeta();
+  meta.cancelled = true;
+  meta.owner = false;
+  saveMeta(meta, s);
+  const loaded = loadMeta(s);
+  assert.equal(loaded.cancelled, true);
+  assert.equal(loaded.owner, false);
+});

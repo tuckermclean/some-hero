@@ -10,6 +10,7 @@ export function stairsOpen(game) {
   const pz = game.puzzle;
   if (!pz) return true;
   if (pz.type === 'warden') return game.boss ? game.boss.dead : true;
+  if (pz.type === 'final') return false;   // no down-stairs on the final floor
   if (pz.type === 'key') return pz.have;
   return !!pz.solved;
 }
@@ -17,6 +18,7 @@ export function stairsOpen(game) {
 /** Message shown when bumping sealed stairs. */
 export function sealMsg(puzzle) {
   if (puzzle.type === 'warden') return 'The seal holds — slay the Warden.';
+  if (puzzle.type === 'final') return 'The cancellation desk is here. The Hero stands between you and it.';
   if (puzzle.type === 'key') return 'Sealed. A bronze key lies on this floor.';
   if (puzzle.type === 'plates') return 'Sealed. Push the blocks onto the glowing plates (' + puzzle.done + '/' + puzzle.need + ').';
   if (puzzle.type === 'riddle') return 'Sealed. The door has a question. The door has been waiting.';

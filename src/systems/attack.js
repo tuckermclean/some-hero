@@ -60,12 +60,20 @@ export function playerAttack(game, fx) {
   return true;
 }
 
-/** Boss death: rewards differ between the overworld Guardian and tomb Wardens. */
+/** Boss death: rewards differ between the overworld Guardian, tomb Wardens, and the final boss. */
 export function killBoss(game, fx) {
   const b = game.boss;
   b.dead = true;
   fx.sfx('win');
   burst(game.parts, b.x, b.y, 36, '#f2d27a', game.rng);
+  // the Origenal Hero (final floor): no loot — just open the desk and let him sit down
+  if (game.zone === 'tomb' && game.puzzle && game.puzzle.type === 'final') {
+    gainXp(game, 200, fx);
+    game.puzzle.bossDead = true;
+    fx.toast('"...Fine. I\'ll be in the break room. The desk is yours, kid."');
+    fx.questChanged();
+    return;
+  }
   if (game.zone === 'ow') {
     gainXp(game, 100, fx);
     game.pickups.push({ kind: 'amulet', x: b.x, y: b.y, v: 1 });

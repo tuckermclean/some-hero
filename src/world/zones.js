@@ -1,6 +1,6 @@
 // Zone transitions: overworld <-> tomb, descending and ascending floors.
 
-import { T } from '../constants.js';
+import { T, FINAL_FLOOR } from '../constants.js';
 import { generateFloor } from './floorgen.js';
 import { startRun, recordDepth } from '../core/meta.js';
 import { newRunStats, gradeRun, gradeRemark } from '../systems/ledger.js';
@@ -43,12 +43,18 @@ export function applyFloor(game, f, arriveAt = 'spawn') {
     // load-bearing rooms the renovation imps can't move
     const pins = [{ w: 5, h: 4, tag: 'breakroom' }];   // the imp break area (Glurp lives here)
     if (f === 3) pins.push({ w: 4, h: 3, tag: 'gap' }); // MIND THE GAP (guestbook inside)
+    if (f >= FINAL_FLOOR) pins.push({ w: 6, h: 5, tag: 'desk' }); // the Cancellation Desk
     const gen = generateFloor(f, game.world.h2, game.rng, pins,
       { forceSeal: game.debug && game.debug.forceSeal });
     const npcs = [];
     // the break room's vending machine is an NPC: TALK to it. it's fine.
     const breakroom = gen.pinnedRooms.find(r => r.tag === 'breakroom');
     if (breakroom) npcs.push({ name: 'GLURP-O-MATIC', kind: 'machine', x: breakroom.cx * T + T / 2, y: breakroom.cy * T + T / 2 - 8 });
+    // the Cancellation Desk: present but inert until the Origenal Hero falls
+    const deskRoom = gen.pinnedRooms.find(r => r.tag === 'desk');
+    if (deskRoom) npcs.push({ name: 'Cancellation Desk', kind: 'desk',
+      x: deskRoom.cx * T + T / 2, y: deskRoom.cy * T + T / 2 - 4,
+      col: '#5a4030', hat: '#3a2820' });
     // Skritch's radio sits by the entry stairs — the floor greets you with
     // its set, and the music thins out the deeper into the floor you walk
     npcs.push({ name: "Skritch's Radio", kind: 'radio', x: (gen.spawn.cx + 1) * T + T / 2, y: gen.spawn.cy * T + T / 2 - 4 });
@@ -75,6 +81,7 @@ export function applyFloor(game, f, arriveAt = 'spawn') {
 
 /** Go one floor deeper. */
 export function descend(game, fx) {
+  if (game.floorNum >= FINAL_FLOOR) return;  // nowhere deeper; the desk is here
   stashFloor(game);
   game.floorNum++;
   game.deepest = Math.max(game.deepest, game.floorNum);

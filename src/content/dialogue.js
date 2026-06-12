@@ -7,9 +7,11 @@
 import { startHunt, claimReward } from '../systems/quest.js';
 import { hespethLine } from './hespeth.js';
 import { grantBackstory } from '../systems/credentials.js';
-import { addMenace } from '../core/meta.js';
+import { addMenace, grantToken } from '../core/meta.js';
 import { ledgerize } from '../systems/ledger.js';
 import { canBorrow, borrow, payDown, aprFor, tierName, creditLimit, minPayment, truthInLending } from '../systems/credit.js';
+import { makeSkullPuzzle, skullAgree, skullCorrect, gradeFirstPet, trySignature, MENACE_THRESHOLD } from '../systems/heist.js';
+import { deskStatus, applyCancel, applyTransfer } from '../systems/endgame.js';
 
 const pct = apr => (apr * 100).toFixed(2) + '%';
 
@@ -284,10 +286,91 @@ export function talkTo(n, game, dialog, fx) {
     }
 
   } else if (n.name === 'Docent Brell') {
+    if (meta.heist.skull) {
+      // skull already obtained — she thinks the "correction" was her idea
+      dialog.say(n.name, [
+        'The skull has been transferred to a more historically accurate private collection. I processed the paperwork myself.',
+        'The new plaques are better. They are CORRECT. And THAT\'S museum science.'
+      ]);
+      return;
+    }
+    // three-round plaque-logic puzzle: agree with her off-by-one "corrections" to trigger auto-deaccession
+    const PLAQUE_FACTS = [
+      { plaque: '"The dungeon was established 40 years ago."',
+        brell: 'Forty-ONE years ago, actually. The plaque is WRONG. Someone will hear about this.' },
+      { plaque: '"Malgrath wielded a sword called Grimtide."',
+        brell: '"Thirstbringer." The plaque misspells it throughout. Classic plaque error. Classic.' },
+      { plaque: '"Cause of death: a hero."',
+        brell: 'A LEGENDARY hero, specifically. The plaque undersells. I have a correction on file.' }
+    ];
+    function skullRound(state) {
+      if (state.done) {
+        grantToken(meta, 'skull');
+        fx.sfx('level');
+        dialog.say(n.name, [
+          'MUSEUM POLICY: exhibit acknowledged incorrect. AUTO-DEACCESSIONED.',
+          'The skull is packaged for you at the gift shop. The bag says "THANK YOU FOR EVILING WITH US."'
+        ]);
+        return;
+      }
+      const fact = PLAQUE_FACTS[state.step] || PLAQUE_FACTS[0];
+      dialog.setSpeaker(n.name);
+      dialog.setText(fact.plaque + ' — wait. ' + fact.brell);
+      dialog.open();
+      dialog.choice([
+        { label: 'You\'re absolutely right.', fn: () => { skullRound(skullAgree(state)); } },
+        { label: 'The plaque seems fine to me.', fn: () => {
+          skullCorrect(state);
+          dialog.setText('The plaques are CORRECT. I wrote these. Every one. And THAT\'S museum science.');
+          dialog.showHint();
+        }}
+      ]);
+    }
     dialog.say(n.name, [
       'Welcome to the future site of the Royal Museum of Having Defeated Evil. Malgrath was slain forty-ONE years ago by a hero wielding the legendary sword Thirstbringer.',
       'And THAT\'S museum science.'
-    ]);
+    ], () => {
+      dialog.setSpeaker(n.name);
+      dialog.setText('Actually, I\'ve been meaning to review the plaques. Someone with fresh eyes might help me catch the errors. The plaques have errors. The plaques are the problem.');
+      dialog.open();
+      dialog.choice([
+        { label: '🏛 Review the plaques with her', fn: () => skullRound(makeSkullPuzzle()) },
+        { label: '✋ Just take the skull', fn: () => {
+          addMenace(meta, 'Removed a skull from a museum. It had a HEROIC CONTEXT.');
+          grantToken(meta, 'skull');
+          fx.sfx('coin');
+          dialog.setText('You take the skull. A small card falls off: "SKULL (HEROIC CONTEXT)." You have stolen an educational resource. It is in your bag now.');
+          dialog.showHint();
+        }},
+        { label: 'Not right now', fn: () => {
+          dialog.setText('The plaques will be here. They are very permanent. And THAT\'S museum science.');
+          dialog.showHint();
+        }}
+      ]);
+    });
+
+  } else if (n.name === 'Museum Exhibit Tag') {
+    if (meta.menace.some(m => /DO NOT REMOVE/.test(m.deed))) {
+      dialog.say(n.name, ['The tag is gone. The tag was very clear. So was the sign.']);
+    } else {
+      dialog.say(n.name, ['A small tag wired to the exhibit case. "DO NOT REMOVE." The wire is very thin.'], () => {
+        dialog.setSpeaker(n.name);
+        dialog.setText('The tag says DO NOT REMOVE. The tag has never been more readable than right now.');
+        dialog.open();
+        dialog.choice([
+          { label: '✋ Remove it', fn: () => {
+            addMenace(meta, 'Removed a tag that said DO NOT REMOVE. The tag was very clear.');
+            fx.sfx('coin');
+            dialog.setText('The tag comes off with a tiny, regrettable snap. It\'s in your pocket now. The case is still there. The tag is not.');
+            dialog.showHint();
+          }},
+          { label: 'Leave it', fn: () => {
+            dialog.setText('You step back. The tag remains. Some laws are observed.');
+            dialog.showHint();
+          }}
+        ]);
+      });
+    }
 
   } else if (n.name === 'King Pfilbert') {
     dialog.say(n.name, [
@@ -300,6 +383,135 @@ export function talkTo(n, game, dialog, fx) {
       'This kingdom is a certified Safe Workplace. The banner is only a little on fire. Fire is a known feature of banners. Certified.',
       'The goose is exempt. Nobody certifies a goose.'
     ]);
+
+  } else if (n.name === 'Royal Grass Sign') {
+    if (meta.menace.some(m => /royal grass/.test(m.deed))) {
+      dialog.say(n.name, ['The sign still says "DO NOT CROSS (ROYAL GRASS)." You have already crossed it. The sign has noted this.']);
+    } else {
+      dialog.say(n.name, ['A sign: "DO NOT CROSS (ROYAL GRASS). By Order of the Crown." The grass is, technically, quite nice.'], () => {
+        dialog.setSpeaker(n.name);
+        dialog.setText('The sign is very official. The grass is right there. These facts coexist.');
+        dialog.open();
+        dialog.choice([
+          { label: '🌿 Cross the royal grass', fn: () => {
+            addMenace(meta, 'Walked on the royal grass. It was, technically, grass. The sign was very clear about this.');
+            fx.sfx('click');
+            dialog.setText('You step onto the royal grass. It is, in fact, just grass. Extremely well-maintained grass. Extremely well-documented grass. It is in the menace résumé now.');
+            dialog.showHint();
+          }},
+          { label: 'Obey the sign', fn: () => {
+            dialog.setText('You step back. The sign seems satisfied. The grass remains royal.');
+            dialog.showHint();
+          }}
+        ]);
+      });
+    }
+
+  } else if (n.name === "Malgrath's Mother") {
+    if (meta.heist.gregory) {
+      // first pet already identified
+      dialog.say(n.name, [
+        'You remembered Gregory! Such a clever one. He was always a good rock.',
+        'He\'s right over there, if you want to say hello. He would like that. Rocks don\'t show it, but he would.'
+      ]);
+    } else {
+      dialog.say(n.name, [
+        'My Malgrath. Such a focused child. The dungeon was his passion. He had a pet, you know. Very calm. Never ran away.',
+        'The other monsters couldn\'t agree on what it was. But if you sat very still, you could hear it not doing anything at all.'
+      ], () => {
+        dialog.setSpeaker(n.name);
+        dialog.setText('What do you think Malgrath\'s first pet was?');
+        dialog.open();
+        dialog.choice([
+          { label: 'Gregory the rock', fn: () => {
+            grantToken(meta, 'gregory');
+            fx.sfx('level');
+            dialog.setText('Oh! You know Gregory! Yes — Gregory. He is right over there. He\'s been right over there for forty years. Rocks don\'t die, dear. That\'s just how rocks are.');
+            dialog.showHint();
+          }},
+          { label: 'A goose', fn: () => {
+            dialog.setText('No, no. Geese are their OWN problem. Malgrath would never. Try again, dear.');
+            dialog.showHint();
+          }},
+          { label: 'A skeleton', fn: () => {
+            dialog.setText('The skeletons were employees, not pets. Malgrath was very clear about HR boundaries. Try again.');
+            dialog.showHint();
+          }},
+          { label: 'A slime', fn: () => {
+            dialog.setText('The slime is an intern. It\'s very different. The paperwork alone— no. Try again, dear.');
+            dialog.showHint();
+          }}
+        ]);
+      });
+    }
+
+  } else if (n.name === 'Gregory') {
+    if (meta.heist.gregory) {
+      dialog.say(n.name, ['Gregory sits here. He is extremely calm about everything. He has always been extremely calm about everything. This, you have learned, is just how Gregory is.']);
+    } else {
+      dialog.say(n.name, ['A rock. Very still. Very grey. There is something about it that suggests it has been here a long time and does not mind this at all.']);
+    }
+
+  } else if (n.name === "Malgrath's Gauntlet") {
+    const result = trySignature(meta);
+    if (result === 'have') {
+      dialog.say(n.name, [
+        'The gauntlet rests where you left it. The signature is secured. Appropriate menace: confirmed.',
+        'It waves, once, diplomatically.'
+      ]);
+    } else if (result === 'insufficient') {
+      const need = MENACE_THRESHOLD - meta.menace.length;
+      dialog.say(n.name, [
+        'The gauntlet lies still. It has reviewed your menace résumé.',
+        'MENACE INSUFFICIENT. ' + meta.menace.length + ' documented offenses. Requires ' + MENACE_THRESHOLD + '. ('  + need + ' more needed.) The signature demands appropriate gravitas. You do not yet have it.'
+      ]);
+    } else {
+      // 'granted' — signature obtained
+      fx.sfx('level');
+      dialog.say(n.name, [
+        'The gauntlet stirs. It has reviewed the résumé. It is satisfied.',
+        'MENACE: APPROPRIATE. It signs. Wherever it signs. It is a gauntlet. The signature is yours. Try not to use it for anything weird.'
+      ]);
+    }
+
+  } else if (n.name === 'Cancellation Desk') {
+    if (!game.puzzle || !game.puzzle.bossDead) {
+      // boss still standing
+      dialog.say(n.name, [
+        'THE CANCELLATION DESK. A small sign: "BACK IN 40 YEARS." The ink is not dry.',
+        'The Origenal Hero is still here. He has opinions about that.'
+      ]);
+    } else {
+      const st = deskStatus(meta);
+      if (!st.ready) {
+        dialog.say(n.name, [
+          'THE FORM REQUIRES:',
+          st.missing.join('; ') + '.',
+          'The desk cannot process an incomplete cancellation. See reverse. (There is no reverse.)'
+        ]);
+      } else {
+        dialog.say(n.name, [
+          'THE FORM IS COMPLETE. All three items present and verified.',
+          'CANCELLATION DESK: "Final question. Do you want the apocalypse to STOP — or do you want it to be YOURS?"'
+        ], () => {
+          dialog.setSpeaker(n.name);
+          dialog.setText('Sign here. Or here. There is no wrong answer. There is, however, a permanent one.');
+          dialog.open();
+          dialog.choice([
+            { label: '✦ Cancel everything', fn: () => {
+              applyCancel(game);
+              fx.sfx('win');
+              fx.onEpilogue();
+            }},
+            { label: '▣ Transfer ownership (become the account holder)', fn: () => {
+              applyTransfer(game);
+              fx.sfx('level');
+              fx.onTransfer();
+            }}
+          ]);
+        });
+      }
+    }
 
   } else { // Picketing Hero
     const lines = quest.stage >= 3

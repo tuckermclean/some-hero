@@ -24,7 +24,16 @@ export function createMeta() {
       balance: 0,
       score: 650,         // a polite assumption
       missed: 0           // two suspends the account
-    }
+    },
+    // Act II heist triangle: three permanent knowledge tokens needed to cancel
+    // the apocalypse. Each is gathered topside; each survives death and newRun.
+    heist: {
+      skull: false,       // proof of death (the Skull Job via Docent Brell)
+      gregory: false,     // security answer — Malgrath's first pet (a rock)
+      signature: false    // account-holder signature (menace earns the gauntlet)
+    },
+    cancelled: false,   // ending A taken: the apocalypse is cancelled
+    owner: false        // ending B taken: player becomes the account holder (NG+)
   };
 }
 
@@ -53,4 +62,15 @@ export function recordDepth(meta, floor) {
 export function addMenace(meta, deed) {
   meta.menace.push({ deed, day: meta.day });
   return meta;
+}
+
+/** Grant one heist token by name ('skull', 'gregory', or 'signature'). */
+export function grantToken(meta, which) {
+  meta.heist[which] = true;
+  return meta;
+}
+
+/** True only when all three heist tokens are held. */
+export function heistComplete(meta) {
+  return meta.heist.skull && meta.heist.gregory && meta.heist.signature;
 }

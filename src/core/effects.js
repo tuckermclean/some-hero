@@ -15,6 +15,8 @@ export function makeEffects(overrides = {}) {
     requestTalk(npc) {},   // player pressed interact next to an NPC
     onPlayerDeath() {},    // hp hit zero
     onAmuletFound() {},    // overworld guardian's amulet collected (win screen)
+    onEpilogue() {},       // ending A: the apocalypse is cancelled
+    onTransfer() {},       // ending B: ownership transferred (New Game+)
     onGolemEntry(missing) {},   // blocked at the dungeon mouth; missing credentials
     onGolemApproval(done) {     // the stamp ceremony (exactly once; the pause is
       done && done();           // sacred). Entry waits for `done` — the screen must

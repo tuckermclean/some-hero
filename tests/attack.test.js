@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, TL } from '../src/constants.js';
+import { T, TL, FINAL_FLOOR } from '../src/constants.js';
 import { playerAttack, killBoss } from '../src/systems/attack.js';
 import { bufferAttack } from '../src/systems/movement.js';
 import { mkEnemy } from '../src/entities/enemy.js';
@@ -133,4 +133,18 @@ test('reach is a property of the weapon: every tier swings further than the last
     playerAttack(game, fx);
     assert.ok(e.hp < e.maxhp, 'tier ' + tier + ' connects at ' + dist);
   }
+});
+
+test('final boss killBoss: sets bossDead, grants xp, drops no loot', () => {
+  const game = blankGame(), fx = spyFx();
+  game.zone = 'tomb'; game.floorNum = FINAL_FLOOR;
+  game.puzzle = { type: 'final', bossDead: false };
+  game.boss = mkBoss(200, 200, { hp: 1, name: 'the Origenal Hero' });
+  killBoss(game, fx);
+  assert.ok(game.boss.dead, 'boss is dead');
+  assert.equal(game.puzzle.bossDead, true, 'bossDead flag set');
+  assert.equal(game.pickups.filter(p => p.kind === 'amulet').length, 0, 'no amulet dropped');
+  assert.equal(game.pickups.filter(p => p.kind === 'maxheart').length, 0, 'no maxheart dropped');
+  assert.ok(game.player.xp > 0, 'xp granted');
+  assert.match(fx.last('toast')[1], /desk is yours/);
 });

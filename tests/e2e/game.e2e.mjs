@@ -361,6 +361,130 @@ try {
   assert.deepEqual(persisted, { deaths: 9, balance: 33, income: 15, mute: '1', btn: '🔇' });
   step('knowledge survives the tab (deaths, balance, income); so does mute');
 
+  // ---------- the heist triangle + final boss + endings ----------
+  // At this point: post-reload, overworld, meta known (deaths:9 etc). The page
+  // is at quest stage 0 and zone 'ow'. We'll use cheats for speed.
+
+  // Grant the three Act II tokens
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'Grant triangle' }).click();
+  await page.waitForTimeout(300);
+  const triangle = await page.evaluate(() => {
+    const { game } = window.__sh;
+    return { ...game.meta.heist };
+  });
+  assert.deepEqual(triangle, { skull: true, gregory: true, signature: true });
+  await page.click('#cheatBtn');  // close panel
+  step('Grant triangle: all three heist tokens granted');
+
+  // Jump to floor 12 and verify the final floor
+  await page.click('#cheatBtn');
+  await page.getByText('Floor 12').click();
+  await page.waitForTimeout(1500);
+  assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 12 });
+  const finalFloor = await page.evaluate(() => {
+    const { game } = window.__sh;
+    const TL_SD = 12;
+    const noSD = !game.world.map.some(v => v === TL_SD);
+    return {
+      puzzleType: game.puzzle.type,
+      bossName: game.boss && game.boss.name,
+      noSD,
+      deskNpc: !!game.npcs.find(n => n.kind === 'desk')
+    };
+  });
+  assert.equal(finalFloor.puzzleType, 'final');
+  assert.match(finalFloor.bossName, /Origenal Hero/);
+  assert.equal(finalFloor.noSD, true, 'no down-stairs on the final floor');
+  assert.equal(finalFloor.deskNpc, true, 'Cancellation Desk NPC present');
+  await shot('11-final-floor');
+  step('Floor 12: final puzzle, Origenal Hero, no SD tile, desk present');
+
+  // Kill the boss via cheat (re-open panel — Floor 12 closed it)
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'Kill boss' }).click();
+  await page.waitForTimeout(400);
+  const bossState = await page.evaluate(() => {
+    const { game } = window.__sh;
+    return { dead: game.boss.dead, bossDead: game.puzzle.bossDead };
+  });
+  assert.equal(bossState.dead, true, 'boss dead');
+  assert.equal(bossState.bossDead, true, 'puzzle.bossDead set');
+  await page.click('#cheatBtn');  // close panel
+  step('Kill boss cheat: boss dead, puzzle.bossDead set');
+
+  // Teleport to the desk and trigger the talk
+  await page.evaluate(() => {
+    const { game, fx } = window.__sh;
+    const desk = game.npcs.find(n => n.kind === 'desk');
+    // requestTalk goes through the real talkTo path, opening the dialog box
+    fx.requestTalk(desk);
+  });
+  await page.waitForTimeout(400);
+  assert.deepEqual(await G(), { zone: 'tomb', state: 2, floor: 12 }, 'in dialog at floor 12');
+  // advance through the opening lines to reach the choice
+  await page.mouse.click(500, 120); await page.waitForTimeout(200);
+  await page.mouse.click(500, 120); await page.waitForTimeout(300);
+  await shot('12-desk-choice');
+  step('Cancellation Desk: dialogue opened, waiting for ending choice');
+
+  // ---- Ending B: Transfer ownership (New Game+) ----
+  await page.getByText('Transfer ownership').click();
+  await page.waitForTimeout(400);
+  assert.match(
+    await page.evaluate(() => document.getElementById('overTitle').innerText),
+    /OWNERSHIP TRANSFERRED/
+  );
+  const ownerSet = await page.evaluate(() => window.__sh.game.meta.owner);
+  assert.equal(ownerSet, true, 'meta.owner set');
+  await shot('13-ending-transfer');
+  step('Transfer ownership: OWNERSHIP TRANSFERRED screen, meta.owner = true');
+
+  // Close the screen → NG+: fresh run, meta preserved
+  await page.mouse.click(500, 120);
+  await page.waitForTimeout(400);
+  const ngPlus = await page.evaluate(() => {
+    const { game } = window.__sh;
+    return { zone: game.zone, floor: game.floorNum, owner: game.meta.owner,
+             skull: game.meta.heist.skull, gregory: game.meta.heist.gregory };
+  });
+  assert.equal(ngPlus.zone, 'ow', 'back to overworld after NG+');
+  assert.equal(ngPlus.floor, 0, 'floor reset');
+  assert.equal(ngPlus.owner, true, 'meta.owner survives newRun');
+  assert.equal(ngPlus.skull, true, 'heist tokens survive newRun');
+  // panel is still open from before; close it now
+  await page.click('#cheatBtn');
+  step('New Game+: overworld reset, meta.owner and heist tokens persist');
+
+  // ---- Ending A: Cancel everything (heist tokens survive from NG+, re-run the boss) ----
+  // Tokens are still in meta, so jump straight to floor 12 and kill the boss again
+  await page.click('#cheatBtn');   // open panel
+  await page.getByText('Floor 12').click();   // closes panel on click
+  await page.waitForTimeout(1500);
+  assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 12 });
+  await page.click('#cheatBtn');   // re-open panel
+  await page.locator('#cheatPanel button', { hasText: 'Kill boss' }).click();  // closes panel
+  await page.waitForTimeout(300);
+
+  await page.evaluate(() => {
+    const { game, fx } = window.__sh;
+    fx.requestTalk(game.npcs.find(n => n.kind === 'desk'));
+  });
+  await page.waitForTimeout(400);
+  await page.mouse.click(500, 120); await page.waitForTimeout(200);
+  await page.mouse.click(500, 120); await page.waitForTimeout(300);
+
+  await page.getByText('Cancel everything').click();
+  await page.waitForTimeout(400);
+  assert.match(
+    await page.evaluate(() => document.getElementById('overTitle').innerText),
+    /APOCALYPSE IS CANCELLED/
+  );
+  const cancelSet = await page.evaluate(() => window.__sh.game.meta.cancelled);
+  assert.equal(cancelSet, true, 'meta.cancelled set');
+  await shot('14-ending-cancel');
+  step('Cancel everything: APOCALYPSE IS CANCELLED screen, meta.cancelled = true');
+
   assert.deepEqual(pageErrors, [], 'no uncaught page errors');
   console.log(`\ne2e: all ${steps} steps passed. screenshots in tests/e2e/shots/`);
 } catch (err) {

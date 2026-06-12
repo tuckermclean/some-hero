@@ -3,7 +3,7 @@
 // seal puzzle: a Warden fight every 4th floor, otherwise key / plates /
 // braziers at random.
 
-import { T, TL, TOMB } from '../constants.js';
+import { T, TL, TOMB, FINAL_FLOOR } from '../constants.js';
 import { tileWalkable } from './tilemap.js';
 import { mkEnemy, pickTombKind } from '../entities/enemy.js';
 import { mkBoss, wardenStats } from '../entities/boss.js';
@@ -74,7 +74,8 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
     if (d > best) { best = d; exitR = rooms[i]; }
   }
   map[spawn.cy * w + spawn.cx] = TL.SU;
-  map[exitR.cy * w + exitR.cx] = TL.SD;
+  // the final floor has no down-stairs — the cancellation desk is here; nowhere deeper
+  if (f < FINAL_FLOOR) map[exitR.cy * w + exitR.cx] = TL.SD;
 
   const midRooms = rooms.filter(r => r !== spawn && r !== exitR && !r.tag);
   const pickRoom = () => midRooms.length ? midRooms[(rng() * midRooms.length) | 0] : exitR;
@@ -90,7 +91,18 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
   // ---- seal puzzle ----
   const SEALS = ['key', 'plates', 'torch', 'riddle', 'traps', 'warden'];
   const forced = SEALS.includes(opts.forceSeal) ? opts.forceSeal : null;
-  if (forced ? forced === 'warden' : f % 4 === 0) {
+  if (f >= FINAL_FLOOR && !forced) {
+    // the Origenal Hero: held the line for 40 years, three weeks from retirement.
+    // He guards the Cancellation Desk in the load-bearing desk room.
+    const deskRoom = pinnedRooms.find(r => r.tag === 'desk') || exitR;
+    puzzle = { type: 'final', bossDead: false };
+    boss = mkBoss(deskRoom.cx * T, (deskRoom.cy - 1) * T, {
+      hp: 200,
+      dmg: 4,
+      name: 'the Origenal Hero',
+      telegraph: '"Forty years I held this line. THREE WEEKS, kid."'
+    });
+  } else if (forced ? forced === 'warden' : f % 4 === 0) {
     puzzle = { type: 'warden' };
     const s = wardenStats(f);
     boss = mkBoss(exitR.cx * T, (exitR.cy - 1) * T, s);
@@ -234,6 +246,10 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
     if (r.tag === 'gap') {
       // MIND THE GAP. The gap has a guestbook. Sign it.
       pickups.push({ kind: 'guestbook', x: r.cx * T + T / 2, y: r.cy * T + T / 2, v: 1 });
+    }
+    if (r.tag === 'desk') {
+      // the Cancellation Desk: a prop and a counter. The NPC is placed by applyFloor.
+      props.push({ kind: 'table', x: r.cx * T + T / 2, y: r.cy * T + T / 2 + 8 });
     }
   }
 

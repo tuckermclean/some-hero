@@ -18,6 +18,8 @@ export function drawNpc(ctx, n, game) {
   const t = game.t, player = game.player;
   if (n.kind === 'machine') { drawMachine(ctx, n, game, S); return; }
   if (n.kind === 'radio') { drawRadio(ctx, n, game, S); return; }
+  if (n.kind === 'rock') { drawRock(ctx, n, game, S); return; }
+  if (n.kind === 'desk') { drawCancellationDesk(ctx, n, game, S); return; }
   if (n.stand) drawStand(ctx, n, game, S);   // behind the vendor
   shadow(ctx, n.x, n.y + 10, 9);
   // picketers march in unison (shared phase); everyone else bobs alone
@@ -139,6 +141,49 @@ function drawRadio(ctx, n, game, S) {
   if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
     ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
     ctx.fillText('!', n.x - 2, n.y - 20 + Math.sin(t * 4) * 2);
+  }
+}
+
+/** Gregory: a rock. He persists. Rocks don't die, dear. */
+function drawRock(ctx, n, game, S) {
+  const player = game.player, t = game.t;
+  shadow(ctx, n.x, n.y + 6, 8);
+  ctx.fillStyle = '#8a8a7a';
+  ctx.beginPath();
+  ctx.ellipse(n.x, n.y, 9, 7, -0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#6a6a5a';
+  ctx.beginPath();
+  ctx.ellipse(n.x + 3, n.y - 2, 5, 4, 0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#b0b09a';
+  ctx.beginPath();
+  ctx.ellipse(n.x - 3, n.y - 2, 4, 2.5, -0.3, 0, Math.PI); ctx.fill();
+  if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
+    ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
+    ctx.fillText('!', n.x - 2, n.y - 18 + Math.sin(t * 4) * 2);
+  }
+}
+
+/** The Cancellation Desk: a counter with a sign. The bureaucracy is real. */
+function drawCancellationDesk(ctx, n, game, S) {
+  const player = game.player, t = game.t;
+  shadow(ctx, n.x, n.y + 14, 14);
+  // the desk body
+  ctx.fillStyle = '#5a4030'; ctx.fillRect(n.x - 14, n.y - 4, 28, 18);
+  ctx.fillStyle = '#3a2820'; ctx.fillRect(n.x - 14, n.y - 4, 28, 4);   // front edge
+  // the sign on the desk
+  ctx.fillStyle = S.pal.paper; ctx.fillRect(n.x - 10, n.y - 12, 20, 10);
+  ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 1;
+  ctx.strokeRect(n.x - 10, n.y - 12, 20, 10);
+  ctx.fillStyle = '#3a2820'; ctx.font = '5px Trebuchet MS'; ctx.textAlign = 'center';
+  ctx.fillText('CANCEL', n.x, n.y - 7);
+  ctx.fillText('HERE', n.x, n.y - 3);
+  ctx.textAlign = 'left';
+  // paperwork stacks
+  ctx.fillStyle = '#f0ead6'; ctx.fillRect(n.x - 8, n.y - 2, 6, 2);
+  ctx.fillStyle = '#e8e2ca'; ctx.fillRect(n.x - 8, n.y - 4, 6, 2);
+  if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
+    ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
+    ctx.fillText('!', n.x - 2, n.y - 24 + Math.sin(t * 4) * 2);
   }
 }
 

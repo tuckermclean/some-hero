@@ -42,6 +42,9 @@ export function tombQuestLine(game) {
   let s = 'Floor ' + game.floorNum + ' · ';
   const pz = game.puzzle;
   if (!pz) return s + 'find the stairs';
+  if (pz.type === 'final') return s + ((pz.bossDead)
+    ? '<b>the desk is open ▣</b>'
+    : '<b>' + ((game.boss && game.boss.name) || 'the Origenal Hero') + '</b>');
   if (pz.type === 'warden') return s + ((game.boss && game.boss.dead) ? '<b>stairs open ↓</b>'
     : '<b>performance review: ' + ((game.boss && game.boss.name) || 'the Warden') + '</b>');
   if (pz.type === 'key') return s + (pz.have ? '<b>stairs open ↓</b>' : 'find the <b>bronze key</b>');

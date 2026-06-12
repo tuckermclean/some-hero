@@ -31,3 +31,8 @@ export const RUIN = { x0: 52, y0: 8, x1: 66, y1: 21 };
 
 // Top-level game states
 export const ST = { MENU: 0, PLAY: 1, DIALOG: 2, DEAD: 3, WIN: 4 };
+
+// The final floor: the Origenal Hero guards the cancellation desk here.
+// Must be a multiple of 4 so the apocalypse-cancel music track fires
+// without any changes to music.js (it already plays at floorNum >= 12).
+export const FINAL_FLOOR = 12;

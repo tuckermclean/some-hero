@@ -100,7 +100,7 @@ test('spawnOverworld: ~26+ fauna, none in the village, the Reenactor asleep at t
   assert.match(s.boss.telegraph, /FAMOUS CHARGE/);
   const btx = s.boss.x / T, bty = s.boss.y / T;
   assert.ok(btx >= RUIN.x0 && btx <= RUIN.x1 && bty >= RUIN.y0 && bty <= RUIN.y1);
-  assert.equal(s.npcs.length, 10);
+  assert.equal(s.npcs.length, 15);  // 10 original + 5 heist-path NPCs
   assert.equal(s.npcs.filter(n => n.name === 'Picketing Hero').length, 3, 'the picket line is a line');
   assert.ok(s.npcs.filter(n => n.name === 'Picketing Hero').every(n => n.sign), 'signs up');
   // the Glurp man's stand is ON the caravan road, properly up the road

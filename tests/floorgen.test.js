@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { TL, TOMB } from '../src/constants.js';
+import { TL, TOMB, FINAL_FLOOR } from '../src/constants.js';
 import { generateFloor } from '../src/world/floorgen.js';
 import { mulberry32, makeHash2 } from '../src/core/rng.js';
 
@@ -196,4 +196,37 @@ test("pinned rooms keep their distance: the radio doesn't room with the Glurp", 
   }
   assert.ok(total >= 25, 'pins place reliably');
   assert.ok(okCount / total >= 0.9, 'separation holds on at least 90% of layouts (guard fallback allows rare crowding)');
+});
+
+test('the final floor has no down-stairs, a final puzzle, and the Origenal Hero', () => {
+  for (let seed = 1; seed <= 5; seed++) {
+    const g = generateFloor(FINAL_FLOOR, h2, mulberry32(seed),
+      [{ w: 6, h: 5, tag: 'desk' }]);
+    assert.equal(g.puzzle.type, 'final', 'puzzle type');
+    assert.equal(g.puzzle.bossDead, false, 'boss starts alive');
+    assert.ok(g.boss, 'boss present');
+    assert.equal(g.boss.name, 'the Origenal Hero');
+    assert.match(g.boss.telegraph, /THREE WEEKS/);
+    assert.equal(g.world.map.filter(v => v === TL.SD).length, 0,
+      `seed ${seed}: no down-stairs on the final floor`);
+    assert.equal(g.world.map.filter(v => v === TL.SU).length, 1, 'up-stairs still present');
+    const desk = g.pinnedRooms.find(r => r.tag === 'desk');
+    assert.ok(desk, 'desk room pinned');
+  }
+});
+
+test('final floor generated without a desk pin falls back gracefully', () => {
+  // generateFloor is callable directly without pins (e.g. old test code paths);
+  // the boss should still place (using exitR as fallback)
+  const g = generateFloor(FINAL_FLOOR, h2, mulberry32(42));
+  assert.equal(g.puzzle.type, 'final');
+  assert.ok(g.boss);
+  assert.equal(g.boss.name, 'the Origenal Hero');
+});
+
+test('forceSeal still overrides the final floor for playtesting', () => {
+  // a forced warden on floor 12 lets devs test the boss path without the final encounter
+  const g = generateFloor(FINAL_FLOOR, h2, mulberry32(7), [], { forceSeal: 'warden' });
+  assert.equal(g.puzzle.type, 'warden', 'forced warden overrides final floor');
+  assert.ok(g.boss);
 });

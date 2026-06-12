@@ -5,6 +5,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { talkTo } from '../src/content/dialogue.js';
 import { blankGame, spyFx } from './helpers.js';
+import { addMenace, grantToken } from '../src/core/meta.js';
+import { MENACE_THRESHOLD } from '../src/systems/heist.js';
+import { ST } from '../src/constants.js';
 
 function stubDialog() {
   const log = [];
@@ -81,4 +84,142 @@ test("Hespeth's radio: the dial is settled law; touching it is documented", () =
   dlg.log.at(-1).opts.find(o => /Touch the dial/.test(o.label)).fn();
   assert.equal(game.meta.menace.length, 1);
   assert.match(game.meta.menace[0].deed, /Stampathy saw/);
+});
+
+// ---- Skull (Docent Brell) ----
+
+test('Brell: three agrees → skull granted', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  // opening say → click through → review plaques choice
+  talkTo({ name: 'Docent Brell' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Review/.test(o.label)).fn();
+  // three agree rounds
+  for (let i = 0; i < 3; i++) {
+    dlg.log.at(-1).opts.find(o => /absolutely right/.test(o.label)).fn();
+  }
+  assert.equal(game.meta.heist.skull, true, 'skull granted after three agrees');
+  assert.equal(fx.count('sfx'), 1, 'a level-up sfx fires');
+});
+
+test('Brell: stealing the skull grants it and adds menace', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: 'Docent Brell' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Just take/.test(o.label)).fn();
+  assert.equal(game.meta.heist.skull, true, 'skull granted via theft');
+  assert.ok(game.meta.menace.some(m => /museum/.test(m.deed)), 'menace documented');
+});
+
+test('Brell: correcting her does not advance the agree count', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: 'Docent Brell' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Review/.test(o.label)).fn();
+  dlg.log.at(-1).opts.find(o => /plaque seems fine/.test(o.label)).fn();  // correct her
+  assert.equal(game.meta.heist.skull, false, 'correction does not grant skull');
+});
+
+// ---- Gregory / Malgrath's Mother ----
+
+test("Malgrath's Mother: naming Gregory grants the token", () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: "Malgrath's Mother" }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Gregory/.test(o.label)).fn();
+  assert.equal(game.meta.heist.gregory, true, 'gregory token granted');
+  assert.equal(fx.count('sfx'), 1, 'sfx fires');
+});
+
+test("Malgrath's Mother: wrong answers do not grant the token", () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: "Malgrath's Mother" }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /goose/.test(o.label)).fn();
+  assert.equal(game.meta.heist.gregory, false, 'wrong answer — not granted');
+});
+
+test('Gregory: talks, reflects meta knowledge', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: 'Gregory' }, game, dlg, fx);
+  assert.ok(dlg.log.length > 0, 'dialogue runs');
+  // with meta known:
+  game.meta.heist.gregory = true;
+  const dlg2 = stubDialog();
+  talkTo({ name: 'Gregory' }, game, dlg2, fx);
+  assert.ok(dlg2.log[0].lines.join('').includes('calm'), 'flavor reflects known Gregory');
+});
+
+// ---- Gauntlet ----
+
+test('gauntlet: insufficient menace → no grant', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  addMenace(game.meta, 'just one');
+  talkTo({ name: "Malgrath's Gauntlet" }, game, dlg, fx);
+  assert.equal(game.meta.heist.signature, false, 'not enough menace');
+  assert.ok(dlg.log[0].lines.join('').includes('INSUFFICIENT'));
+});
+
+test('gauntlet: enough menace → signature granted', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  for (let i = 0; i < MENACE_THRESHOLD; i++) addMenace(game.meta, 'crime ' + i);
+  talkTo({ name: "Malgrath's Gauntlet" }, game, dlg, fx);
+  assert.equal(game.meta.heist.signature, true, 'signature granted');
+  assert.equal(fx.count('sfx'), 1, 'sfx fires');
+});
+
+// ---- petty crime interactables ----
+
+test('Royal Grass Sign: crossing adds menace once', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: 'Royal Grass Sign' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Cross/.test(o.label)).fn();
+  assert.equal(game.meta.menace.length, 1);
+  assert.match(game.meta.menace[0].deed, /royal grass/);
+});
+
+test('Museum Exhibit Tag: removing adds menace', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: 'Museum Exhibit Tag' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Remove it/.test(o.label)).fn();
+  assert.equal(game.meta.menace.length, 1);
+  assert.match(game.meta.menace[0].deed, /DO NOT REMOVE/);
+});
+
+// ---- Cancellation Desk ----
+
+test('desk: before boss dead, reports the Hero is still here', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  game.puzzle = { type: 'final', bossDead: false };
+  grantToken(game.meta, 'skull'); grantToken(game.meta, 'gregory'); grantToken(game.meta, 'signature');
+  talkTo({ name: 'Cancellation Desk' }, game, dlg, fx);
+  assert.ok(dlg.log[0].lines.join('').toLowerCase().includes('hero'), 'hero mentioned');
+  assert.equal(game.meta.cancelled, false, 'no ending yet');
+});
+
+test('desk: after boss dead, incomplete triangle → reports missing tokens', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  game.puzzle = { type: 'final', bossDead: true };
+  // only skull granted
+  grantToken(game.meta, 'skull');
+  talkTo({ name: 'Cancellation Desk' }, game, dlg, fx);
+  const text = dlg.log.map(e => e.lines ? e.lines.join(' ') : '').join(' ');
+  assert.ok(text.includes('Gregory') || text.includes('Signature') || text.toLowerCase().includes('missing'), 'missing tokens reported');
+  assert.equal(game.meta.cancelled, false);
+});
+
+test('desk: all tokens + bossDead → Cancel choice applies cancel ending', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  game.puzzle = { type: 'final', bossDead: true };
+  grantToken(game.meta, 'skull'); grantToken(game.meta, 'gregory'); grantToken(game.meta, 'signature');
+  talkTo({ name: 'Cancellation Desk' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Cancel everything/.test(o.label)).fn();
+  assert.equal(game.meta.cancelled, true, 'cancelled set');
+  assert.equal(game.state, ST.WIN, 'state is WIN');
+  assert.equal(fx.count('onEpilogue'), 1, 'epilogue effect called');
+});
+
+test('desk: all tokens + bossDead → Transfer choice applies transfer ending', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  game.puzzle = { type: 'final', bossDead: true };
+  grantToken(game.meta, 'skull'); grantToken(game.meta, 'gregory'); grantToken(game.meta, 'signature');
+  talkTo({ name: 'Cancellation Desk' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Transfer ownership/.test(o.label)).fn();
+  assert.equal(game.meta.owner, true, 'owner set');
+  assert.equal(fx.count('onTransfer'), 1, 'transfer effect called');
 });

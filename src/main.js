@@ -119,6 +119,8 @@ const fx = makeEffects({
       hespethLine(willBeDeaths));
   },
   onAmuletFound: () => screens.showWin(),
+  onEpilogue:    () => screens.showEpilogue(),
+  onTransfer:    () => screens.showTransfer(),
 
   // ---- the Door Golem ----
   onGolemEntry: missing => dialog.say('Door Golem', entryLines(game, missing)),
@@ -210,7 +212,14 @@ let pendingDeath = null;
 window.addEventListener('pointerdown', e => {
   if (game.state === ST.MENU) { splash.pointer(e); return; }
   if (game.state === ST.DEAD) { resurrect(); return; }
-  if (game.state === ST.WIN) { screens.closeOver(); game.state = ST.PLAY; return; }
+  if (game.state === ST.WIN) {
+    screens.closeOver();
+    // Transfer (New Game+): close the screen into a fresh run. meta is kept —
+    // heist tokens, menace, knowledge, owner flag all survive newRun() by design.
+    if (game.meta.owner && !game.meta.cancelled) { newRun(game); fx.hudChanged(); fx.questChanged(); }
+    game.state = ST.PLAY;
+    return;
+  }
   if (game.state === ST.DIALOG) { dialog.advance(); return; }
   if (e.target.classList && e.target.classList.contains('btn')) return;
   if (e.target.tagName === 'BUTTON') return;

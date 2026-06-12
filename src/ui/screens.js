@@ -17,6 +17,18 @@ export function makeScreens(els) {
       overTip.textContent = 'tap — then descend. NOW LEAVING: SAFETY.';
       over.classList.remove('hidden');
     },
+    showEpilogue() {
+      overTitle.textContent = '✦ THE APOCALYPSE IS CANCELLED ✦';
+      overSub.textContent = 'The dungeon powers down. The skeletons file for unemployment. The slime intern receives an offer — from the topside. Somewhere, a curse auto-renewal notice returns: "ADDRESS UNKNOWN." TICKET #44,107: CLOSED.';
+      overTip.textContent = '*stamp* The Ledger narrates the epilogue. It is, for once, accurate. tap to continue.';
+      over.classList.remove('hidden');
+    },
+    showTransfer() {
+      overTitle.textContent = '▣ OWNERSHIP TRANSFERRED ▣';
+      overSub.textContent = 'You are the new account holder. The monsters call you "boss." Clerk Hespeth has prepared a greeting. It is: "Oh no. Sir." The dungeon is yours now. The quarterly content refresh is your problem.';
+      overTip.textContent = 'NEW GAME+ — roguelike a dungeon you own. tap to begin again.';
+      over.classList.remove('hidden');
+    },
     closeOver() { over.classList.add('hidden'); }
   };
 }
