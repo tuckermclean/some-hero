@@ -150,3 +150,16 @@ test('updateGame publishes the live quest line while in the tomb', async () => {
   assert.ok(fx.count('setQuestHTML') >= 1);
   assert.match(fx.last('setQuestHTML')[1], /Floor 1/);
 });
+
+test('Glurp refusals come with reasons; a drink is a wet glurp', () => {
+  const game = blankGame(), fx = spyFx();
+  game.player.potions = 0; game.player.hp = 3;
+  usePotion(game, fx);
+  assert.match(fx.last('toast')[1], /Out of Glurp/);
+  game.player.potions = 1; game.player.hp = game.player.maxhp;
+  usePotion(game, fx);
+  assert.match(fx.last('toast')[1], /insufficiently hurt, sad, cursed, or dead-ish/);
+  game.player.hp = 3;
+  assert.equal(usePotion(game, fx), true);
+  assert.equal(fx.last('sfx')[1], 'glurp');
+});

@@ -6,7 +6,8 @@
 
 import * as dbg from '../systems/debug.js';
 import { grantBackstory, grantDebt } from '../systems/credentials.js';
-import { addMenace } from '../core/meta.js';
+import { addMenace, createMeta } from '../core/meta.js';
+import { wipeSave } from '../core/save.js';
 
 const SEAL_CYCLE = [null, 'key', 'plates', 'torch', 'riddle', 'traps', 'warden'];
 
@@ -111,6 +112,12 @@ export function makeCheats(game, fx, { skins } = {}) {
   btn(r, 'Die now', () => { api.close(); dbg.dieNow(game, fx); });
   btn(r, 'Customs 12g', () => { api.close(); dbg.triggerCustoms(game, fx); });
   btn(r, 'Win (topside)', () => { api.close(); dbg.triggerWin(game, fx); });
+  btn(r, 'Wipe save', () => {
+    wipeSave();
+    game.meta = createMeta();
+    fx.hudChanged();
+    fx.toast('Saved knowledge wiped. The Ledger pretends not to mind.');
+  });
 
   const foot = document.createElement('div');
   foot.className = 'cheatFoot';

@@ -49,7 +49,15 @@ by death, and a TRUTH IN LENDING form accurate to the gold piece
 (`systems/credit.js`, fully unit-tested). The dungeon drops no heals; the
 break room's GLURP-O-MATIC sells (cash or credit) and remembers being
 kicked. Weapon ladder: slap / Pointy / DIRK!(tm) 60g / DIRK! ULTRA(tm) 400g /
-sun-steel (dungeon find).
+sun-steel (dungeon find); reach scales with the tier.
+
+**Knowledge persists across the tab too**: `meta` (deaths, day, credit,
+menace, credentials, the stamp ceremony) autosaves to localStorage
+(`core/save.js`, versioned, forward-compatible merge). Items stay
+temporary. The cheat panel has a Wipe save row. The recorded **GLURP
+jingle** (`assets/audio/`) loops near the gift shop and ends with a
+really wet *glurp* — which is the sound of drinking one. Mute button
+(or M) silences everything, persistently.
 
 ## The roster
 
@@ -71,7 +79,7 @@ Load with `?cheats` (or `?test`) — a CHEAT button appears after the splash;
 backtick toggles it. Go to any floor through the real zone functions (run
 invariants intact), grant credentials/gold/sword, set quest stage, force the
 next seal type, toggle god mode / lights / skin, trigger death, customs, or
-the win. Headless mutations live in `systems/debug.js` (unit-tested); the
+the win, and wipe the save. Headless mutations live in `systems/debug.js` (unit-tested); the
 panel is `ui/cheats.js` and ships zero markup when the param is absent.
 
 ## What's implemented (mapped to the design doc)

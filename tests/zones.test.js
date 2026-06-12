@@ -163,3 +163,16 @@ test('a slain warden stays slain for the rest of the day', () => {
   descend(game, fx);                                        // back to 4
   assert.equal(game.boss.dead, true, 'the performance review stays concluded');
 });
+
+test('revisited floors say so', () => {
+  const game = seededGame(45), fx = spyFx();
+  enterTomb(game, fx);
+  assert.ok(!/As you left it/.test(fx.last('toast')[1]), 'first visit is just the floor');
+  descend(game, fx);
+  ascend(game, fx);
+  assert.match(fx.last('toast')[1], /As you left it/);
+  game.puzzle = { type: 'key', have: true };   // open the seal we stand over
+  game.player.tk = 'stale';                    // step back down through the SD
+  handleStairs(game, fx);
+  assert.match(fx.last('toast')[1], /Floor 2.*As you left it/);
+});

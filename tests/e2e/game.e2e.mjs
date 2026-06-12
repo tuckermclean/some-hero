@@ -28,7 +28,8 @@ await mkdir(SHOTS, { recursive: true });
 // ---------- a tiny static server (no dependencies) ----------
 const MIME = {
   '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
-  '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon'
+  '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon',
+  '.mp3': 'audio/mpeg', '.wav': 'audio/wav'
 };
 const server = http.createServer(async (req, res) => {
   try {

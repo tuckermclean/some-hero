@@ -76,8 +76,9 @@ export function descend(game, fx) {
   game.floorNum++;
   game.deepest = Math.max(game.deepest, game.floorNum);
   game.runStats.depth = Math.max(game.runStats.depth, game.floorNum);
+  const revisit = !!game.floorCache[game.floorNum];
   applyFloor(game, game.floorNum, 'spawn');
-  fx.toast(floorLine(game.floorNum));
+  fx.toast(floorLine(game.floorNum) + (revisit ? ' (As you left it.)' : ''));
   if (game.floorNum % 4 === 0) fx.sfx('boss');
 }
 
@@ -86,7 +87,7 @@ export function ascend(game, fx) {
   stashFloor(game);
   game.floorNum--;
   applyFloor(game, game.floorNum, 'exit');
-  fx.toast(floorLine(game.floorNum));
+  fx.toast(floorLine(game.floorNum) + ' (As you left it.)');
 }
 
 /** Step onto the trapdoor in the overworld: stash the overworld, descend to floor 1. */

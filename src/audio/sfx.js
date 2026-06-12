@@ -1,18 +1,49 @@
-// WebAudio bleep synth. The only audio in the game.
+// WebAudio synth bleeps + the shared audio plumbing. Everything the game
+// plays routes through one AudioContext and one master gain, so mute is
+// mute (beeps, stings, and the jingle alike).
 
-let AC = null;
+import { glurpSting } from './jingle.js';
+
+let AC = null, MASTER = null;
+let muted = false;
+try { muted = localStorage.getItem('sh-mute') === '1'; } catch (e) { /* private mode */ }
+
+/** The shared AudioContext (created lazily — needs a user gesture anyway). */
+export function getAC() {
+  if (!AC) {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    MASTER = AC.createGain();
+    MASTER.gain.value = muted ? 0 : 1;
+    MASTER.connect(AC.destination);
+  }
+  return AC;
+}
+
+/** The master gain node; connect all audio here, never to the destination. */
+export function masterOut() {
+  getAC();
+  return MASTER;
+}
+
+export function isMuted() { return muted; }
+
+export function setMuted(m) {
+  muted = !!m;
+  if (MASTER) MASTER.gain.value = muted ? 0 : 1;
+  try { localStorage.setItem('sh-mute', muted ? '1' : '0'); } catch (e) { /* private mode */ }
+}
 
 export function beep(f, d, type, vol, slide) {
   try {
-    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
-    const o = AC.createOscillator(), g = AC.createGain();
+    const ctx = getAC();
+    const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = type || 'square';
-    o.frequency.setValueAtTime(f, AC.currentTime);
-    if (slide) o.frequency.exponentialRampToValueAtTime(slide, AC.currentTime + d);
-    g.gain.setValueAtTime(vol || .04, AC.currentTime);
-    g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + d);
-    o.connect(g); g.connect(AC.destination);
-    o.start(); o.stop(AC.currentTime + d);
+    o.frequency.setValueAtTime(f, ctx.currentTime);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, ctx.currentTime + d);
+    g.gain.setValueAtTime(vol || .04, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + d);
+    o.connect(g); g.connect(MASTER);
+    o.start(); o.stop(ctx.currentTime + d);
   } catch (e) { /* audio unavailable */ }
 }
 
@@ -32,7 +63,10 @@ export const sfx = {
   // a dry mechanism clack, then the sad thunk of a dart not arriving
   click:  () => { beep(1300, .03, 'square', .06); setTimeout(() => beep(220, .05, 'square', .03), 45); },
   // an open hand meeting a goose. neither is proud of it
-  slap:   () => beep(240, .06, 'triangle', .05, 140)
+  slap:   () => beep(240, .06, 'triangle', .05, 140),
+  // drinking Glurp plays the wet *glurp* from the end of the jingle;
+  // the heal bleep stands in until the recording has loaded
+  glurp:  () => { if (!glurpSting()) beep(520, .18, 'sine', .05, 780); }
 };
 
 export function playSfx(name) {

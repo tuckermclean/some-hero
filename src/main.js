@@ -4,7 +4,9 @@ import { ST, T, VH, VIL } from './constants.js';
 import { createGame, newRun } from './core/game.js';
 import { updateGame } from './core/update.js';
 import { makeEffects } from './core/effects.js';
-import { playSfx } from './audio/sfx.js';
+import { playSfx, setMuted, isMuted } from './audio/sfx.js';
+import { updateJingle } from './audio/jingle.js';
+import { loadMeta, saveMeta } from './core/save.js';
 import { makeHud } from './ui/hud.js';
 import { makeToast } from './ui/toast.js';
 import { makeDialog } from './ui/dialog.js';
@@ -52,6 +54,18 @@ resize();
 
 // ---------- game + UI ----------
 const game = createGame();
+
+// knowledge is permanent — across the tab, too
+const savedMeta = loadMeta();
+if (savedMeta) game.meta = savedMeta;
+let lastSaved = '';
+function persist() {
+  const now = JSON.stringify(game.meta);
+  if (now !== lastSaved && saveMeta(game.meta)) lastSaved = now;
+}
+window.addEventListener('beforeunload', persist);
+document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
+setInterval(persist, 5000);
 
 // skin: game.skin drives the canvas, a body class drives the CSS vars
 function setSkin(name) {
@@ -171,6 +185,21 @@ window.addEventListener('keydown', e => {
   if (e.key === '`' && cheats && game.state !== ST.MENU) cheats.toggle();
 });
 
+// ---------- mute (button + M key; persisted) ----------
+const muteBtn = document.createElement('div');
+muteBtn.id = 'muteBtn';
+muteBtn.textContent = isMuted() ? '\u{1F507}' : '\u{1F50A}';
+muteBtn.style.display = 'none';
+muteBtn.addEventListener('pointerdown', e => { e.stopPropagation(); toggleMute(); });
+document.getElementById('wrap').appendChild(muteBtn);
+function toggleMute() {
+  setMuted(!isMuted());
+  muteBtn.textContent = isMuted() ? '\u{1F507}' : '\u{1F50A}';
+}
+window.addEventListener('keydown', e => {
+  if ((e.key === 'm' || e.key === 'M') && game.state !== ST.MENU) toggleMute();
+});
+
 let pendingDeath = null;
 window.addEventListener('pointerdown', e => {
   if (game.state === ST.MENU) { splash.pointer(e); return; }
@@ -203,6 +232,7 @@ function startGame() {
   screens.closeOver();
   hud.show();
   if (cheats) cheats.button.style.display = 'flex';
+  muteBtn.style.display = 'flex';
   fx.hudChanged();
   fx.questChanged();
 }
@@ -217,6 +247,7 @@ function loop(now) {
     my: m.my !== 0 ? m.my : stick.dy
   };
   updateGame(game, controls, dt, { w: screen.viewW }, fx);
+  updateJingle(game);   // 🎵 it loops. walk fast.
   toast.tick(dt);
   render(ctx, game, screen);
   requestAnimationFrame(loop);
