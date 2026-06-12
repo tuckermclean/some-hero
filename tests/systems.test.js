@@ -100,7 +100,7 @@ test('spawnOverworld: ~26+ fauna, none in the village, the Reenactor asleep at t
   assert.match(s.boss.telegraph, /FAMOUS CHARGE/);
   const btx = s.boss.x / T, bty = s.boss.y / T;
   assert.ok(btx >= RUIN.x0 && btx <= RUIN.x1 && bty >= RUIN.y0 && bty <= RUIN.y1);
-  assert.equal(s.npcs.length, 7);
+  assert.equal(s.npcs.length, 8);
 });
 
 test('newRun resets the player and quest and repopulates', () => {

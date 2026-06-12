@@ -8,6 +8,8 @@ export const TALK_RANGE = 44;
 export function villageNpcs() {
   return [
     { name: 'Clerk Hespeth',    x: (VIL.x - 2) * T,   y: (VIL.y - 2) * T,   col: '#3f5d7a', hat: '#3f8f5a' },
+    // her radio, on the desk. the light set. the dial is settled law.
+    { name: "Hespeth's Radio",  x: (VIL.x - 3.5) * T, y: (VIL.y - 2) * T,   kind: 'radio' },
     // the shop sits at the village edge so its jingle is a destination,
     // not a roommate of the resurrection desk
     { name: 'Gift Shop Gnoll',  x: (VIL.x + 5) * T,   y: (VIL.y - 1) * T,   col: '#a07232', hat: '#c0392b' },

@@ -25,10 +25,11 @@ test('topside: the Guild Hall radio AND the gift shop jingle, simultaneously', (
   game.zone = 'ow';
   game.npcs = [
     { name: 'Clerk Hespeth', x: 500, y: 600 },
+    { name: "Hespeth's Radio", kind: 'radio', x: 446, y: 600 },
     { name: 'Gift Shop Gnoll', x: 800, y: 600 }
   ];
   const s = musicSources(game);
-  assert.equal(byName(s, 'microwave')[0].x, 500, 'the radio on Hespeth\'s desk');
+  assert.equal(byName(s, 'microwave')[0].x, 446, 'the music comes from her radio, not from her');
   assert.equal(byName(s, 'jingle')[0].x, 800, 'the hit single, from the shop');
   assert.equal(s.length, 2, 'both at once — that\'s the album');
 });
@@ -75,7 +76,10 @@ test('Performance Review radiates from the Warden; floor 12 gets the apocalypse'
 test('Gumdrop Verdict: the activated Reenactor brings his own accompaniment', () => {
   const game = blankGame();
   game.zone = 'ow';
-  game.npcs = [{ name: 'Clerk Hespeth', x: 500, y: 600 }];
+  game.npcs = [
+    { name: 'Clerk Hespeth', x: 500, y: 600 },
+    { name: "Hespeth's Radio", kind: 'radio', x: 446, y: 600 }
+  ];
   game.boss = mkBoss(900, 200);
 
   assert.equal(byName(musicSources(game), 'microwave').length, 1, 'asleep: just the radio');

@@ -56,9 +56,9 @@ export function musicSources(game) {
     if (b && !b.dead && b.state !== 'sleep') {
       out.push({ name: 'gumdrop', x: b.x, y: b.y, range: 700, max: 0.45 });
     } else {
-      // the Guild Hall radio on Hespeth's desk. she did not choose it.
-      const h = game.npcs.find(n => n.name === 'Clerk Hespeth');
-      if (h) out.push({ name: 'microwave', x: h.x, y: h.y, range: 520, max: 0.4 });
+      // Hespeth's radio, on the desk — the light set
+      const r = game.npcs.find(n => n.kind === 'radio');
+      if (r) out.push({ name: 'microwave', x: r.x, y: r.y, range: 520, max: 0.4 });
     }
   } else if (game.boss && !game.boss.dead && game.floorNum % 4 === 0) {
     // the review radiates from the reviewer

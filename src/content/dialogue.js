@@ -229,6 +229,27 @@ export function talkTo(n, game, dialog, fx) {
       ]);
     });
 
+  } else if (n.name === "Hespeth's Radio") {
+    dialog.say(n.name, [
+      'A radio, playing the light set. A label, stamped twice: PROPERTY OF CLERK HESPETH. THE DIAL IS SETTLED LAW.'
+    ], () => {
+      dialog.setSpeaker(n.name);
+      dialog.setText('The dial has not moved in years. It is, in every sense that matters, notarized.');
+      dialog.open();
+      dialog.choice([
+        { label: '✋ Touch the dial', fn: () => {
+          addMenace(meta, "Touched Hespeth's radio dial. Stampathy saw.");
+          fx.sfx('click');
+          dialog.setText('You touch the dial. It does not move. Across the square, a stamp comes down on nothing in particular.');
+          dialog.showHint();
+        }},
+        { label: 'Leave it', fn: () => {
+          dialog.setText('The light set plays on. Somewhere in it, faintly, the sound of a kingdom getting through the week.');
+          dialog.showHint();
+        }}
+      ]);
+    });
+
   } else if (n.name === "Skritch's Radio") {
     dialog.say(n.name, [
       'A radio, mid-set. A sticky note: DO NOT TOUCH. The note is signed by the radio.'

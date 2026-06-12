@@ -73,3 +73,11 @@ test("Skritch's radio: touching it is documented; respecting the note is not", (
   dlg.log.at(-1).opts.find(o => /Respect/.test(o.label)).fn();
   assert.equal(game.meta.menace.length, 1, 'restraint goes undocumented');
 });
+
+test("Hespeth's radio: the dial is settled law; touching it is documented", () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: "Hespeth's Radio", kind: 'radio' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Touch the dial/.test(o.label)).fn();
+  assert.equal(game.meta.menace.length, 1);
+  assert.match(game.meta.menace[0].deed, /Stampathy saw/);
+});
