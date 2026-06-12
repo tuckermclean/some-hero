@@ -36,11 +36,27 @@ palettes, the lantern, and the CSS UI vars (`body.skin-*`). The retired
 desert monster drawings are parked in `desert.enemyDraw`. Switch skins from
 the cheat menu; the choice persists in localStorage.
 
+## The economy
+
+You start unarmed (a slap: damage 1, slap-sized reach, does not launch a
+goose). Hermit Gorse in the west meadow grants Pointy, the pointy stick.
+The goose bounty (15 g, hazard rate) is payroll — payroll verifies income —
+and income is what the **Guild Revolving Credit Account** lends against:
+limits at 4x verified income by tier, a 300-850 credit score with quantified
+APRs (9.99% preferred to 99.99% "adventurous"), interest compounding per
+excursion, resurrection garnishment with a 1 g convenience fee for paying
+by death, and a TRUTH IN LENDING form accurate to the gold piece
+(`systems/credit.js`, fully unit-tested). The dungeon drops no heals; the
+break room's GLURP-O-MATIC sells (cash or credit) and remembers being
+kicked. Weapon ladder: slap / Pointy / DIRK!(tm) 60g / DIRK! ULTRA(tm) 400g /
+sun-steel (dungeon find).
+
 ## The roster
 
 Front Office: `skeleton` (Local 206, rattles), `mailbat` (URGENT),
 `consultant` (ghost; walls are for employees), `cabinet` (retaliates —
-inert archival furniture until struck), and the `slime` — the intern,
+inert archival furniture placed in rows along walls; strike one and the
+wave of waking travels down the row), and the `slime` — the intern,
 fully passive, TECHNICALLY doing its best; killing it silently costs a
 letter grade. Topside: `pigeon` (retaliates; the flock remembers),
 `goose` (the one topside danger; declined certification), `veteran`
