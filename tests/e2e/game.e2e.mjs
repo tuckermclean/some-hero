@@ -229,7 +229,7 @@ try {
   assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 12 });
   for (const t of ['ledger-lightning-bolt', 'audit-microwave', 'factory-synesthesia',
                    'performance-review', 'apocalypse-cancel']) {
-    assert.equal(fetchedTracks[t], 200, t + ' fetched by its zone');
+    assert.equal(fetchedTracks[t], 200, t + ' fetched by its zone (sources pre-load even out of earshot)');
   }
   step('the OST: title, topside radio, breakroom radio, the review, the apocalypse — all sourced');
 

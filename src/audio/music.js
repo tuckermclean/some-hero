@@ -187,10 +187,11 @@ export function glurpSting() {
  */
 export function updateMusic(game) {
   try {
-    const want = {};   // track -> target gain
+    const want = {};   // track -> target gain (0 = sourced but out of earshot:
+                       // the tape still spins, so approach never hits a load)
     for (const s of musicSources(game)) {
       const g = sourceGain(s, game.player.x, game.player.y);
-      if (g > (want[s.name] || 0)) want[s.name] = g;
+      if (!(s.name in want) || g > want[s.name]) want[s.name] = g;
     }
     // the Reenactor's overture doesn't fade on his death; the tape dies
     if (channels.gumdrop && !('gumdrop' in want) &&
