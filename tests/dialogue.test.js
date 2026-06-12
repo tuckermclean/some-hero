@@ -60,3 +60,16 @@ test('the GLURP-O-MATIC sells, finances, and remembers being kicked', () => {
   assert.match(game.meta.menace[0].deed, /vending machine/);
   assert.equal(game.player.potions, 3, 'no free Glurp at rng 0.9');
 });
+
+test("Skritch's radio: touching it is documented; respecting the note is not", () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  const radio = { name: "Skritch's Radio", kind: 'radio' };
+  talkTo(radio, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /TOUCH/.test(o.label)).fn();
+  assert.equal(game.meta.menace.length, 1);
+  assert.match(game.meta.menace[0].deed, /note specifically said/);
+
+  talkTo(radio, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Respect/.test(o.label)).fn();
+  assert.equal(game.meta.menace.length, 1, 'restraint goes undocumented');
+});

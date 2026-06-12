@@ -43,11 +43,15 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
     const rh = Math.max(3, Math.min(spec.h || 4, h - 6));
     // stairs only ever go on room centres, so a pinned room must never cover
     // one — reject placements that do (rooms already holds earlier pinned
-    // rooms too, which keeps their story content from stacking)
+    // rooms too). Pinned rooms also keep their distance from each other, so
+    // the break room's jingle and Skritch's radio don't share an address.
     let x = 2, y = 2;
     for (let t = 0; t < 80; t++) {
       x = 2 + (rng() * (w - rw - 4) | 0); y = 2 + (rng() * (h - rh - 4) | 0);
-      if (!rooms.some(r => r.cx >= x && r.cx < x + rw && r.cy >= y && r.cy < y + rh)) break;
+      const cx = x + (rw >> 1), cy = y + (rh >> 1);
+      if (rooms.some(r => r.cx >= x && r.cx < x + rw && r.cy >= y && r.cy < y + rh)) continue;
+      if (pinnedRooms.some(r => Math.hypot(r.cx - cx, r.cy - cy) < 10)) continue;
+      break;
     }
     const room = { x, y, w: rw, h: rh, cx: x + (rw >> 1), cy: y + (rh >> 1), tag: spec.tag };
     rooms.push(room);

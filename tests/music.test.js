@@ -33,19 +33,30 @@ test('topside: the Guild Hall radio AND the gift shop jingle, simultaneously', (
   assert.equal(s.length, 2, 'both at once — that\'s the album');
 });
 
-test('downstairs: the breakroom radio and the machine\'s own ad, layered', () => {
+test('downstairs: Skritch\'s radio plays the music; the machine only hums its ad', () => {
   const game = blankGame();
   game.zone = 'tomb'; game.floorNum = 2;
-  game.npcs = [{ name: 'GLURP-O-MATIC', kind: 'machine', x: 300, y: 300 }];
+  game.npcs = [
+    { name: 'GLURP-O-MATIC', kind: 'machine', x: 300, y: 300 },
+    { name: "Skritch's Radio", kind: 'radio', x: 700, y: 500 }
+  ];
   const s = musicSources(game);
-  assert.equal(byName(s, 'factory')[0].x, 300);
-  assert.equal(byName(s, 'jingle')[0].x, 300, 'the machine hums its own ad over the imps\' radio');
+  assert.equal(byName(s, 'factory')[0].x, 700, 'the music comes from the radio room');
+  assert.equal(byName(s, 'jingle')[0].x, 300, 'the ad comes from the machine');
+  assert.equal(byName(s, 'jingle')[0].range, 130, 'the jingle stays close to home');
+
+  // a machine alone is not a music source
+  game.npcs = [{ name: 'GLURP-O-MATIC', kind: 'machine', x: 300, y: 300 }];
+  assert.equal(byName(musicSources(game), 'factory').length, 0);
 });
 
 test('Performance Review radiates from the Warden; floor 12 gets the apocalypse', () => {
   const game = blankGame();
   game.zone = 'tomb'; game.floorNum = 4;
-  game.npcs = [{ name: 'GLURP-O-MATIC', kind: 'machine', x: 300, y: 300 }];
+  game.npcs = [
+    { name: 'GLURP-O-MATIC', kind: 'machine', x: 300, y: 300 },
+    { name: "Skritch's Radio", kind: 'radio', x: 200, y: 900 }
+  ];
   game.boss = mkBoss(700, 700);
   let s = musicSources(game);
   assert.equal(byName(s, 'review')[0].x, 700, 'the review follows the reviewer');

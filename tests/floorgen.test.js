@@ -183,3 +183,17 @@ test('enemies and loot spawn on walkable tiles', () => {
   for (const e of g.enemies) assert.ok(ok(e.x, e.y), 'enemy in a wall');
   for (const p of g.pickups) assert.ok(ok(p.x, p.y), 'pickup in a wall');
 });
+
+test("pinned rooms keep their distance: the radio doesn't room with the Glurp", () => {
+  let okCount = 0, total = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const g = generateFloor(2, h2, mulberry32(seed),
+      [{ w: 5, h: 4, tag: 'breakroom' }, { w: 4, h: 3, tag: 'radio' }]);
+    if (g.pinnedRooms.length !== 2) continue;
+    total++;
+    const [a, b] = g.pinnedRooms;
+    if (Math.hypot(a.cx - b.cx, a.cy - b.cy) >= 8) okCount++;
+  }
+  assert.ok(total >= 25, 'pins place reliably');
+  assert.ok(okCount / total >= 0.9, 'separation holds on at least 90% of layouts (guard fallback allows rare crowding)');
+});

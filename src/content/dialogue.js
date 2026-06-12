@@ -229,6 +229,27 @@ export function talkTo(n, game, dialog, fx) {
       ]);
     });
 
+  } else if (n.name === "Skritch's Radio") {
+    dialog.say(n.name, [
+      'A radio, mid-set. A sticky note: DO NOT TOUCH. The note is signed by the radio.'
+    ], () => {
+      dialog.setSpeaker(n.name);
+      dialog.setText('The note has been re-stuck several times. The adhesive is tired. The conviction is not.');
+      dialog.open();
+      dialog.choice([
+        { label: '✋ TOUCH IT', fn: () => {
+          addMenace(meta, "Touched Skritch's radio. The note specifically said.");
+          fx.sfx('click');
+          dialog.setText('You touch it. Nothing happens. Everything has been recorded. Somewhere, an imp feels a disturbance in his set list.');
+          dialog.showHint();
+        }},
+        { label: 'Respect the note', fn: () => {
+          dialog.setText('You step back. The note relaxes visibly. The radio plays on, unbetrayed.');
+          dialog.showHint();
+        }}
+      ]);
+    });
+
   } else if (n.name === 'Hermit Gorse') {
     if (player.swordLv < 1) {
       dialog.say(n.name, [

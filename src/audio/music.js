@@ -67,14 +67,14 @@ export function musicSources(game) {
       x: game.boss.x, y: game.boss.y, range: 640, max: 0.45
     });
   } else {
-    // the imp break room's radio (it lives on top of the GLURP-O-MATIC)
-    const m = game.npcs.find(n => n.kind === 'machine');
-    if (m) out.push({ name: 'factory', x: m.x, y: m.y, range: 460, max: 0.4 });
+    // Skritch's radio, in its own room — the break room is for Glurp
+    const r = game.npcs.find(n => n.kind === 'radio');
+    if (r) out.push({ name: 'factory', x: r.x, y: r.y, range: 460, max: 0.4 });
   }
   // the hit single: everything that dispenses Glurp hums it
   for (const n of game.npcs) {
     if (n.name === 'Gift Shop Gnoll' || n.kind === 'machine') {
-      out.push({ name: 'jingle', x: n.x, y: n.y, range: 170, max: 0.5 });
+      out.push({ name: 'jingle', x: n.x, y: n.y, range: 130, max: 0.5 });
     }
   }
   return out;

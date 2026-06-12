@@ -17,6 +17,7 @@ export function drawNpc(ctx, n, game) {
   const S = getSkin(game);
   const t = game.t, player = game.player;
   if (n.kind === 'machine') { drawMachine(ctx, n, game, S); return; }
+  if (n.kind === 'radio') { drawRadio(ctx, n, game, S); return; }
   shadow(ctx, n.x, n.y + 10, 9);
   const bob = Math.sin(t * 2 + n.x) * 1.2;
   ctx.fillStyle = n.col; ctx.fillRect(n.x - 7, n.y - 6 + bob, 14, 16);
@@ -51,6 +52,34 @@ function drawMachine(ctx, n, game, S) {
   if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
     ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
     ctx.fillText('!', n.x - 2, n.y - 26 + Math.sin(t * 4) * 2);
+  }
+}
+
+/** Skritch's radio: a boombox with a note. DO NOT TOUCH. */
+function drawRadio(ctx, n, game, S) {
+  const t = game.t, player = game.player;
+  shadow(ctx, n.x, n.y + 8, 10);
+  ctx.fillStyle = '#3a3f46'; ctx.fillRect(n.x - 11, n.y - 4, 22, 12);     // body
+  ctx.strokeStyle = '#6a7280'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(n.x + 8, n.y - 4); ctx.lineTo(n.x + 13, n.y - 13); ctx.stroke();  // antenna
+  ctx.fillStyle = '#1d242c';
+  ctx.beginPath();
+  ctx.arc(n.x - 6, n.y + 2, 3.5, 0, Math.PI * 2);
+  ctx.arc(n.x + 6, n.y + 2, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  // the EQ, working hard
+  ctx.fillStyle = S.pal.glow;
+  for (let i = 0; i < 3; i++) {
+    const hgt = 2 + Math.abs(Math.sin(t * 6 + i * 1.3)) * 4;
+    ctx.fillRect(n.x - 3 + i * 3, n.y - 2 - hgt + 4, 2, hgt);
+  }
+  ctx.fillStyle = S.pal.paper; ctx.fillRect(n.x - 10, n.y - 9, 8, 6);     // the note
+  ctx.strokeStyle = 'rgba(0,0,0,.4)';
+  ctx.beginPath(); ctx.moveTo(n.x - 9, n.y - 7); ctx.lineTo(n.x - 4, n.y - 7);
+  ctx.moveTo(n.x - 9, n.y - 5); ctx.lineTo(n.x - 5, n.y - 5); ctx.stroke();
+  if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
+    ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
+    ctx.fillText('!', n.x - 2, n.y - 20 + Math.sin(t * 4) * 2);
   }
 }
 
