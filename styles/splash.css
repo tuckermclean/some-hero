@@ -180,6 +180,17 @@
   cursor:pointer;
 }
 @keyframes splashBlink{0%,100%{opacity:1}50%{opacity:.35}}
+#splash .soundhint{
+  margin-top:1.1rem;
+  font-family:var(--clerk);
+  font-size:clamp(.6rem,1.3vw,.78rem);
+  letter-spacing:.18em;
+  color:#6e6759;
+  opacity:0;
+  animation:splashRiseIn 1.2s ease-out 7.6s forwards;
+  transition:opacity .8s ease;
+}
+#splash .soundhint.off{opacity:0 !important;animation:none}
 
 /* ---------- corners ---------- */
 #splash .ledger-note{

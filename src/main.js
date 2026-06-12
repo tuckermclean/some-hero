@@ -195,7 +195,7 @@ window.addEventListener('keydown', e => {
 const muteBtn = document.createElement('div');
 muteBtn.id = 'muteBtn';
 muteBtn.textContent = isMuted() ? '\u{1F507}' : '\u{1F50A}';
-muteBtn.style.display = 'none';
+// visible from boot — a silent title screen should at least show you why
 muteBtn.addEventListener('pointerdown', e => { e.stopPropagation(); toggleMute(); });
 document.getElementById('wrap').appendChild(muteBtn);
 function toggleMute() {
@@ -238,7 +238,6 @@ function startGame() {
   screens.closeOver();
   hud.show();
   if (cheats) cheats.button.style.display = 'flex';
-  muteBtn.style.display = 'flex';
   fx.hudChanged();
   fx.questChanged();
 }

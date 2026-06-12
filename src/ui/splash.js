@@ -57,8 +57,13 @@ export function makeSplash(els, { onStart }) {
     })();
   }
 
+  // the band starts on the first gesture (browser rules); retire the hint
+  const soundHint = splash.querySelector('.soundhint');
+  function hintOff() { if (soundHint) soundHint.classList.add('off'); }
+
   function react() {
     if (started) return;
+    hintOff();
     stamp.classList.remove('wobble'); void stamp.offsetWidth; stamp.classList.add('wobble');
     typeOut(splashLine(i++));
   }
@@ -66,6 +71,7 @@ export function makeSplash(els, { onStart }) {
   function begin() {
     if (started) return;
     started = true;
+    hintOff();
     typeOut(SPLASH_START_LINE);
     splash.classList.add('fadeout');
     onStart();  // the game starts NOW; the splash fades off of it

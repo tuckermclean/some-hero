@@ -100,7 +100,7 @@ function load(name) {
     .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
     .then(d => getAC().decodeAudioData(d))
     .then(b => { buffers[name] = b; })
-    .catch(() => { /* no music from this source today */ });
+    .catch(() => { loading[name] = 'failed'; /* no music from this source today */ });
 }
 
 /** Trim encoder padding so mp3 loops don't gap. */
@@ -164,6 +164,14 @@ function windDown(name) {
 
 /** The splash registers here to pulse on the title track's drum hits. */
 export function onTitleBeat(cb) { beatCb = cb; }
+
+/** Debug/diagnostics: what's loaded, what's playing, at what gain. */
+export function musicDebug() {
+  const out = { loaded: Object.keys(buffers), failed: [], channels: {} };
+  for (const [n, v] of Object.entries(loading)) if (v === 'failed') out.failed.push(n);
+  for (const [n, ch] of Object.entries(channels)) out.channels[n] = +ch.gain.gain.value.toFixed(3);
+  return out;
+}
 
 /** The wet *glurp* from the end of the jingle. False if not loaded yet. */
 export function glurpSting() {
