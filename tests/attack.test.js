@@ -86,10 +86,10 @@ test('full swing kill: attack -> dead enemy -> xp + loot', () => {
 });
 
 test('a slap has the reach of a slap and does not launch a goose', () => {
-  // beyond slap reach (Rb = R-10) but within stick reach
+  // beyond slap reach (14 + goose 12 = 26 from the hand) but within Pointy's (18 + 12 = 30)
   const game = blankGame(), fx = spyFx();
   game.player.swordLv = 0; game.player.fx = 1; game.player.fy = 0;
-  const far = mkEnemy('goose', game.player.x + 24 + 36, game.player.y);
+  const far = mkEnemy('goose', game.player.x + 24 + 27, game.player.y);
   game.enemies = [far];
   bufferAttack(game);
   playerAttack(game, fx);
@@ -109,4 +109,28 @@ test('a slap has the reach of a slap and does not launch a goose', () => {
   playerAttack(g2, fx2);
   assert.equal(near.kbx, 56, 'a whap does not launch a goose');
   assert.equal(fx2.calls.find(c => c[0] === 'sfx')[1], 'slap');
+});
+
+test('reach is a property of the weapon: every tier swings further than the last', () => {
+  // each enemy sits just beyond the previous tier's reach and inside its own
+  // (hand at +24; hit when dist-from-hand < radius + goose 12)
+  const RADII = [14, 18, 22, 26, 32];
+  for (let tier = 1; tier <= 4; tier++) {
+    const game = blankGame(), fx = spyFx();
+    game.player.fx = 1; game.player.fy = 0;
+    const dist = RADII[tier - 1] + 12 + 1;   // out of (tier-1)'s reach...
+    assert.ok(dist < RADII[tier] + 12, 'and inside this tier\'s');
+    const e = mkEnemy('goose', game.player.x + 24 + dist, game.player.y);
+    game.enemies = [e];
+
+    game.player.swordLv = tier - 1;
+    bufferAttack(game);
+    playerAttack(game, fx);
+    assert.equal(e.hp, e.maxhp, 'tier ' + (tier - 1) + ' falls short at ' + dist);
+
+    game.player.swordLv = tier; game.player.atkT = 0;
+    bufferAttack(game);
+    playerAttack(game, fx);
+    assert.ok(e.hp < e.maxhp, 'tier ' + tier + ' connects at ' + dist);
+  }
 });

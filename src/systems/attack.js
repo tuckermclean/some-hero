@@ -7,7 +7,14 @@ import { gainXp } from './progression.js';
 import { igniteBraziers } from './puzzles.js';
 
 export const STRIKE_REACH = 24;  // hand offset from player center
-export const STRIKE_R = 30;      // strike radius around the hand
+export const BRAZIER_R = 30;     // lamp-lighting radius (not a combat reach problem)
+
+// Strike radius by weapon tier: reach is a property of the weapon.
+// A slap is a slap, Pointy is a stick, a DIRK! is short ("basically a
+// sword"), the ULTRA is engineered, and sun-steel swings like it means it.
+export const STRIKE_RADII = [14, 18, 22, 26, 32];
+export const strikeRadius = swordLv =>
+  STRIKE_RADII[Math.min(swordLv, STRIKE_RADII.length - 1)];
 
 /**
  * Resolve one buffered attack if the cooldown allows. Returns true if a
@@ -22,15 +29,15 @@ export function playerAttack(game, fx) {
   fx.sfx(slap ? 'slap' : 'swing');
 
   const fm = Math.hypot(p.fx, p.fy) || 1, fxd = p.fx / fm, fyd = p.fy / fm;
-  const hx = p.x + fxd * STRIKE_REACH, hy = p.y + fyd * STRIKE_REACH, R = STRIKE_R;
-  // a slap has the reach of a slap, and it does not launch a goose —
+  const hx = p.x + fxd * STRIKE_REACH, hy = p.y + fyd * STRIKE_REACH;
+  // reach scales with the weapon; a slap also does not launch a goose —
   // full knockback would shove enemies out of their own contact range
   // every hit, which is what made bare-handed goose abatement safe
-  const Rb = slap ? R - 10 : R;
+  const Rb = strikeRadius(p.swordLv);
   const kb = slap ? 56 : 140;
 
-  // light braziers (full R: lighting a lamp is not a combat reach problem)
-  if (game.zone === 'tomb') igniteBraziers(game, hx, hy, R, fx);
+  // light braziers at fixed radius: lamps don't care what you're holding
+  if (game.zone === 'tomb') igniteBraziers(game, hx, hy, BRAZIER_R, fx);
 
   // enemies
   for (const e of game.enemies) {

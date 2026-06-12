@@ -6,6 +6,7 @@
 // (skin color, player palette) come from skin.actors.
 
 import { getSkin } from './skins/index.js';
+import { strikeRadius } from '../systems/attack.js';
 
 export function shadow(ctx, x, y, r) {
   ctx.fillStyle = 'rgba(0,0,0,.18)';
@@ -257,18 +258,20 @@ export function drawPlayer(ctx, game) {
   ctx.fillStyle = A.playerAccent; ctx.fillRect(p.x + 4, p.y - 16, 4, 5);
   ctx.fillStyle = A.eye;
   const ex = p.x + p.fx * 3; ctx.fillRect(ex - 3, p.y - 12, 2, 3); ctx.fillRect(ex + 1, p.y - 12, 2, 3);
-  // swing: a sword arc, or — tier 0 — a short, honest whap
+  // swing: the visual arc matches the weapon's real reach — what you see
+  // is what hits. tier 0 is a short, honest whap
   if (p.atkT > 0.14) {
+    const R = strikeRadius(p.swordLv);
     const fm = Math.hypot(p.fx, p.fy) || 1, fx = p.fx / fm, fy = p.fy / fm;
     const prog = 1 - (p.atkT - 0.14) / 0.2;
     const a0 = Math.atan2(fy, fx) - 1.2 + prog * 2.4;
     if (p.swordLv >= 1) {
       ctx.strokeStyle = p.swordLv > 1 ? A.swordUp : A.sword; ctx.lineWidth = 4; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(p.x + Math.cos(a0) * 10, p.y - 4 + Math.sin(a0) * 10);
-      ctx.lineTo(p.x + Math.cos(a0) * 30, p.y - 4 + Math.sin(a0) * 30); ctx.stroke();
+      ctx.lineTo(p.x + Math.cos(a0) * (R + 8), p.y - 4 + Math.sin(a0) * (R + 8)); ctx.stroke();
     }
     ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = p.swordLv >= 1 ? 8 : 6;
     ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.arc(p.x, p.y - 4, p.swordLv >= 1 ? 26 : 16, a0 - .5, a0 + .1); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y - 4, R + 4, a0 - .5, a0 + .1); ctx.stroke();
   }
 }
