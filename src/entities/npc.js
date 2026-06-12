@@ -10,9 +10,9 @@ export function villageNpcs() {
     { name: 'Clerk Hespeth',    x: (VIL.x - 2) * T,   y: (VIL.y - 2) * T,   col: '#3f5d7a', hat: '#3f8f5a' },
     // her radio, on the desk. the light set. the dial is settled law.
     { name: "Hespeth's Radio",  x: (VIL.x - 3.5) * T, y: (VIL.y - 2) * T,   kind: 'radio' },
-    // the shop sits at the village edge so its jingle is a destination,
-    // not a roommate of the resurrection desk
-    { name: 'Gift Shop Gnoll',  x: (VIL.x + 5) * T,   y: (VIL.y - 1) * T,   col: '#a07232', hat: '#c0392b' },
+    // the Glurp man. spawnOverworld relocates him onto the caravan road,
+    // where the stand, the big sign, and the radio do the selling
+    { name: 'Gift Shop Gnoll',  x: (VIL.x + 5) * T,   y: (VIL.y - 1) * T,   col: '#a07232', hat: '#c0392b', stand: true },
     // the picket line. it's a line now. the chants still don't scan.
     // (west of the resurrection desk's foot traffic — you can spawn
     // without being immediately unionized)

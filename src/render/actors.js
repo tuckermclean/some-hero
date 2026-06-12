@@ -18,6 +18,7 @@ export function drawNpc(ctx, n, game) {
   const t = game.t, player = game.player;
   if (n.kind === 'machine') { drawMachine(ctx, n, game, S); return; }
   if (n.kind === 'radio') { drawRadio(ctx, n, game, S); return; }
+  if (n.stand) drawStand(ctx, n, game, S);   // behind the vendor
   shadow(ctx, n.x, n.y + 10, 9);
   // picketers march in unison (shared phase); everyone else bobs alone
   const bob = Math.sin(n.sign ? t * 2 : t * 2 + n.x) * 1.2;
@@ -69,6 +70,47 @@ function drawMachine(ctx, n, game, S) {
   if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
     ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
     ctx.fillText('!', n.x - 2, n.y - 26 + Math.sin(t * 4) * 2);
+  }
+}
+
+/** The Glurp stand: counter, striped awning, the BIG sign, and a radio
+ *  on the counter playing the theme. Location, location, foot traffic. */
+function drawStand(ctx, n, game, S) {
+  const t = game.t;
+  // the BIG sign, planted beside the stand
+  ctx.fillStyle = '#8a7a5c';
+  ctx.fillRect(n.x + 26, n.y - 44, 3, 50);                       // post
+  ctx.fillStyle = '#74c4b8';
+  ctx.fillRect(n.x + 6, n.y - 58, 44, 22);                       // placard
+  ctx.strokeStyle = '#2e8f83'; ctx.lineWidth = 2;
+  ctx.strokeRect(n.x + 7, n.y - 57, 42, 20);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px Trebuchet MS'; ctx.textAlign = 'center';
+  ctx.fillText('GLURP™', n.x + 28, n.y - 44);
+  ctx.font = '5px Trebuchet MS';
+  ctx.fillText('NOW WITH FEWER EELS!', n.x + 28, n.y - 38.5);
+  ctx.textAlign = 'left';
+  // awning over the vendor: posts + stripes
+  ctx.fillStyle = '#6e5a48';
+  ctx.fillRect(n.x - 20, n.y - 26, 2, 30); ctx.fillRect(n.x + 18, n.y - 26, 2, 30);
+  for (let i = 0; i < 6; i++) {
+    ctx.fillStyle = i % 2 ? '#e8e2d0' : '#c0392b';
+    ctx.fillRect(n.x - 22 + i * 7.5, n.y - 32, 7.5, 7);
+  }
+  // the counter
+  ctx.fillStyle = S.pal.wood; ctx.fillRect(n.x - 20, n.y + 2, 40, 9);
+  ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(n.x - 20, n.y + 2, 40, 2);
+  // bottles on display
+  ctx.fillStyle = '#74c4b8';
+  for (let i = 0; i < 3; i++) ctx.fillRect(n.x - 14 + i * 8, n.y - 3, 4, 6);
+  // the radio, on the counter, mid-jingle
+  ctx.fillStyle = '#3a3f46'; ctx.fillRect(n.x + 8, n.y - 5, 12, 7);
+  ctx.fillStyle = '#1d242c';
+  ctx.beginPath(); ctx.arc(n.x + 11, n.y - 1.5, 1.8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = S.pal.glow;
+  for (let i = 0; i < 2; i++) {
+    const h = 1.5 + Math.abs(Math.sin(t * 6 + i * 1.4)) * 2.5;
+    ctx.fillRect(n.x + 14.5 + i * 2.5, n.y - 1 - h, 1.5, h);
   }
 }
 
