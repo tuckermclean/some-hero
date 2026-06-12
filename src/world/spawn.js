@@ -39,15 +39,16 @@ export function spawnOverworld(world, rng = Math.random) {
   });
   const npcs = villageNpcs();
 
-  // the Glurp man sets up his stand ON the caravan road, a short walk out
-  // of town — location, location, foot traffic
+  // the Glurp man sets up his stand ON the caravan road, properly up the
+  // road — far enough that the jingle is something you walk INTO on the
+  // way to the Victory Site, not village ambience
   const gnoll = npcs.find(n => n.name === 'Gift Shop Gnoll');
   if (gnoll) {
     let best = null, bestD = Infinity;
     for (let y = 2; y < world.h - 2; y++) for (let x = 2; x < world.w - 2; x++) {
       if (tileAt(world, x, y) !== TL.ROAD) continue;
       const d = Math.hypot(x - VIL.x, y - VIL.y);
-      if (d >= 4 && d < bestD) { bestD = d; best = { x, y }; }
+      if (d >= 10 && d < bestD) { bestD = d; best = { x, y }; }
     }
     if (best) { gnoll.x = best.x * T + T / 2; gnoll.y = best.y * T - 4; }
   }

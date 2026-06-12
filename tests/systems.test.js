@@ -103,13 +103,13 @@ test('spawnOverworld: ~26+ fauna, none in the village, the Reenactor asleep at t
   assert.equal(s.npcs.length, 10);
   assert.equal(s.npcs.filter(n => n.name === 'Picketing Hero').length, 3, 'the picket line is a line');
   assert.ok(s.npcs.filter(n => n.name === 'Picketing Hero').every(n => n.sign), 'signs up');
-  // the Glurp man's stand is ON the caravan road, a short walk from town
+  // the Glurp man's stand is ON the caravan road, properly up the road
   const gnoll = s.npcs.find(n => n.name === 'Gift Shop Gnoll');
   assert.ok(gnoll.stand, 'he has a stand');
   const gtx = Math.floor(gnoll.x / T), gty = Math.floor((gnoll.y + 4) / T);
   assert.equal(world.map[gty * world.w + gtx], TL.ROAD, 'the stand sits on the road');
   const gd = Math.hypot(gtx - VIL.x, gty - VIL.y);
-  assert.ok(gd >= 4 && gd <= 12, 'a short walk out of town, got ' + gd.toFixed(1));
+  assert.ok(gd >= 10 && gd <= 18, 'properly up the road, got ' + gd.toFixed(1));
 });
 
 test('newRun resets the player and quest and repopulates', () => {
