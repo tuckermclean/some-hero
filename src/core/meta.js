@@ -18,7 +18,13 @@ export function createMeta() {
       debt: false       // crippling debt (one purchase on credit suffices)
     },
     golemApproved: false, // the stamp ceremony happens exactly once
-    menace: []            // the Menace Résumé: [{ deed, day }]
+    menace: [],           // the Menace Résumé: [{ deed, day }]
+    income: 0,            // verified income (Guild payroll; slaying geese is payroll)
+    credit: {             // the Guild Revolving Credit Account (systems/credit.js)
+      balance: 0,
+      score: 650,         // a polite assumption
+      missed: 0           // two suspends the account
+    }
   };
 }
 

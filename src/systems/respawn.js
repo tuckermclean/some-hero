@@ -11,6 +11,7 @@
 
 import { T, VIL, ST } from '../constants.js';
 import { recordDeath } from '../core/meta.js';
+import { makeDeathPayment } from './credit.js';
 import { restoreSurface } from '../world/zones.js';
 
 /**
@@ -34,6 +35,11 @@ export function respawnAtGuild(game, fx) {
   const deductible = Math.ceil(p.gold / 2);
   p.gold -= deductible;
 
+  // the account does not respect the body bin: minimum payment + the
+  // convenience fee for paying by death (strict no-op with no balance)
+  const garnish = makeDeathPayment(game.meta, p.gold);
+  if (garnish) p.gold -= garnish.paid + garnish.fee;
+
   // items are temporary
   p.potions = 1;
   p.hp = p.maxhp;
@@ -48,5 +54,5 @@ export function respawnAtGuild(game, fx) {
   game.state = ST.PLAY;
   fx.hudChanged();
   fx.questChanged();
-  return { deductible, cause };
+  return { deductible, cause, garnish };
 }

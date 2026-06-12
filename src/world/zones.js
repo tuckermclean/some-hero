@@ -4,6 +4,7 @@ import { T } from '../constants.js';
 import { generateFloor } from './floorgen.js';
 import { startRun, recordDepth } from '../core/meta.js';
 import { newRunStats, gradeRun, gradeRemark } from '../systems/ledger.js';
+import { accrueInterest } from '../systems/credit.js';
 import { floorLine } from '../content/floors.js';
 
 /** Restore the stashed overworld exactly (no grading, no customs — just the
@@ -56,7 +57,10 @@ export function enterTomb(game, fx) {
   game.floorNum = 0;
   game.runStats = newRunStats();
   startRun(game.meta);
+  // one excursion = one month (see the Truth in Lending form, clause 3)
+  const interest = accrueInterest(game.meta);
   fx.toast('Day ' + game.meta.day + '. Run #' + game.meta.runs + '. NOW LEAVING: SAFETY.');
+  if (interest > 0) fx.toast('Your account has accrued ' + interest + ' g interest. (See Schedule B.)');
   descend(game, fx);
 }
 

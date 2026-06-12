@@ -15,9 +15,11 @@ export function recordPestKill(quest) {
   return true;
 }
 
-/** Clerk Hespeth pays out and points at the Victory Site. */
+/** Clerk Hespeth pays out and points at the Victory Site.
+ *  The bounty is payroll — it verifies your income for credit purposes. */
 export function claimReward(game) {
-  game.player.gold += 50;
+  game.player.gold += 15;
+  game.meta.income += 15;
   game.quest.stage = 3;
 }
 

@@ -26,9 +26,17 @@ export function hespethLine(deaths) {
   return line;
 }
 
-/** Resurrection-desk flavor for the death screen. */
-export function resurrectionNote(deductible) {
-  return deductible > 0
+/** Resurrection-desk flavor for the death screen, itemized when the
+ *  account is involved. garnish = { due, paid, fee, missed } or null. */
+export function resurrectionNote(deductible, garnish = null) {
+  let note = deductible > 0
     ? 'Resurrection plan: standard. Deductible applied: ' + deductible + ' g. *stamp*'
     : 'Resurrection plan: standard. Deductible applied: nothing, because you had nothing. *stamp* (sympathy stamp)';
+  if (garnish) {
+    note += ' Account minimum: ' + garnish.paid + ' of ' + garnish.due + ' g.';
+    if (garnish.fee > 0) note += ' Convenience fee for paying by death: ' + garnish.fee + ' g.';
+    if (garnish.missed) note += ' Short. Noted. (Your score felt that.)';
+    note += ' *stamp*';
+  }
+  return note;
 }

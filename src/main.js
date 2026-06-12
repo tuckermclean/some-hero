@@ -190,11 +190,11 @@ els.btnP.addEventListener('pointerdown', e => { e.stopPropagation(); usePotion(g
 function resurrect() {
   const grade = pendingDeath ? pendingDeath.grade : 'C';
   pendingDeath = null;
-  const { deductible } = respawnAtGuild(game, fx);
+  const { deductible, garnish } = respawnAtGuild(game, fx);
   game.meta.grades.push(grade);
   screens.closeOver();
   hud.show();
-  toast.show(resurrectionNote(deductible));
+  toast.show(resurrectionNote(deductible, garnish));
 }
 
 function startGame() {

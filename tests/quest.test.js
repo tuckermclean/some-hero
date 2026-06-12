@@ -17,7 +17,8 @@ test('full quest arc: 0 -> hunt -> claim -> seek -> done', () => {
 
   const goldBefore = game.player.gold;
   claimReward(game);
-  assert.equal(game.player.gold, goldBefore + 50);
+  assert.equal(game.player.gold, goldBefore + 15);
+  assert.equal(game.meta.income, 15, 'the bounty is payroll: it verifies income');
   assert.equal(q.stage, 3);
 
   completeQuest(q);

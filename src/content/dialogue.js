@@ -6,8 +6,19 @@
 
 import { startHunt, claimReward } from '../systems/quest.js';
 import { hespethLine } from './hespeth.js';
-import { grantBackstory, grantDebt } from '../systems/credentials.js';
+import { grantBackstory } from '../systems/credentials.js';
 import { ledgerize } from '../systems/ledger.js';
+import { canBorrow, borrow, payDown, aprFor, tierName, creditLimit, minPayment, truthInLending } from '../systems/credit.js';
+
+const pct = apr => (apr * 100).toFixed(2) + '%';
+
+/** The decline letters. Each reason gets the dignity of specificity. */
+function declineText(reason, meta) {
+  if (reason === 'no income') return 'DECLINED: NO VERIFIABLE INCOME. The Guild pays bounties. Geese are out there. Geese are income.';
+  if (reason === 'delinquent') return 'Your file has a sticker on it. The sticker is red. I\'m sorry.';
+  if (reason === 'score') return 'DECLINED: score below 500. The form I\'m required to slide across the counter says "we believe in you," and then lists, at length, why we don\'t.';
+  return 'DECLINED: that would exceed your limit of ' + creditLimit(meta) + ' g. The limit believes in you exactly four times your income.';
+}
 
 export function talkTo(n, game, dialog, fx) {
   const quest = game.quest, player = game.player, meta = game.meta;
@@ -24,7 +35,8 @@ export function talkTo(n, game, dialog, fx) {
     ]);
     else if (quest.stage === 2) dialog.say(n.name, [
       'Five geese. Verified. Stamped. *stamp* That one wasn\'t necessary. *stamp* Neither was that.',
-      'Fifty gold, hazard rate. Now: the Reenactor holds the Victory Site northeast. He has performed the Battle of Greater Pflum daily for forty years. Both sides. Alone. Your ticket is, apparently, a prop he needs.',
+      'Fifteen gold, hazard rate. The hazard rate went down. You survived, so clearly it wasn\'t hazardous. Also: this is payroll, which means you now have verifiable income. The gift shop will explain why that matters. At length.',
+      'Now: the Reenactor holds the Victory Site northeast. He has performed the Battle of Greater Pflum daily for forty years. Both sides. Alone. Your ticket is, apparently, a prop he needs.',
       'When he charges — he announces it first. Loudly. It\'s theater. You\'ll know.'
     ], () => { claimReward(game); fx.sfx('coin'); fx.hudChanged(); fx.questChanged(); });
     else if (quest.stage === 3) {
@@ -73,61 +85,101 @@ export function talkTo(n, game, dialog, fx) {
             { label: 'Not yet', fn: () => { dialog.setText('Body bin\'s where it always is.'); dialog.showHint(); }}
           ]);
         });
-      } else dialog.say(n.name, [
-        hespethLine(meta.deaths),
-        'Ticket\'s stamped. The cancellation desk is on the bottom floor. Behind the boss. Of course it is. Day ' + meta.day + ', if you\'re keeping count. The Ledger is.'
-      ]);
+      } else {
+        const lines = [
+          hespethLine(meta.deaths),
+          'Ticket\'s stamped. The cancellation desk is on the bottom floor. Behind the boss. Of course it is. Day ' + meta.day + ', if you\'re keeping count. The Ledger is.'
+        ];
+        if (meta.credit.score >= 750) lines.push('Also the Guild Plus Card people called about you. Twice. I gave them your address. It seemed legal.');
+        dialog.say(n.name, lines);
+      }
     }
 
   } else if (n.name === 'Gift Shop Gnoll') {
-    dialog.say(n.name, ['\u{1F3B5} GLURP! It\'s adventure fluid! \u{1F3B5} \u2014 sorry. It loops. What do you need?'], () => {
+    // one path for every SKU: cash or the account, by the book
+    const buy = (price, ownedCheck, ownedText, apply, soldText) => ({
+      cash: () => {
+        if (ownedCheck()) dialog.setText(ownedText);
+        else if (player.gold >= price) { player.gold -= price; apply(); fx.hudChanged(); dialog.setText(soldText); }
+        else dialog.setText(price + ' gold. The register does not do wishes.');
+        dialog.showHint();
+      },
+      credit: () => {
+        if (ownedCheck()) dialog.setText(ownedText);
+        else {
+          const v = canBorrow(meta, price);
+          if (!v.ok) dialog.setText(declineText(v.reason, meta));
+          else {
+            borrow(meta, price); apply(); fx.hudChanged();
+            dialog.setText('Financed: ' + price + ' g at ' + pct(aprFor(meta.credit.score)) +
+              ' APR (' + tierName(meta.credit.score) + '). Balance: ' + meta.credit.balance +
+              ' g. Your debt is now officially crippling. This is a credential. Welcome to finance.');
+          }
+        }
+        dialog.showHint();
+      }
+    });
+    const skus = {
+      glurp: buy(20, () => false, '',
+        () => { player.potions++; fx.sfx('coin'); },
+        'Ingredients: fluid, attitude, eels (fewer). Glurp will not fix you.*  (*Glurp will mostly fix you.)'),
+      dirk: buy(60, () => player.swordLv >= 2,
+        'You already have a DIRK! or better. Brand loyalty. The mascot salutes you. He has arms. Don\'t ask.',
+        () => { player.swordLv = 2; fx.sfx('level'); },
+        'DIRK! It\'s basically a sword! That\'s the whole slogan. Legal made us keep "basically."'),
+      ultra: buy(400, () => player.swordLv >= 3,
+        'You already swing ULTRA-class or better. The engineers send their regards. All nine of them.',
+        () => { player.swordLv = 3; fx.sfx('level'); },
+        'DIRK! ULTRA. Engineered composite. "Basically a better sword." The materials data sheet is laminated. Hespeth did that.')
+    };
+
+    const accountMenu = () => {
+      const c = meta.credit;
+      dialog.setSpeaker(n.name);
+      dialog.setText('Account: balance ' + c.balance + ' g \u00B7 score ' + c.score + ' (' + tierName(c.score) +
+        ', ' + pct(aprFor(c.score)) + ' APR) \u00B7 limit ' + creditLimit(meta) + ' g \u00B7 minimum due ' + minPayment(c) + ' g.');
+      dialog.open();
+      dialog.choice([
+        { label: '\u{1F9EA} GLURP\u2122 on credit', fn: skus.glurp.credit },
+        { label: '\u2694 DIRK!\u2122 on credit', fn: skus.dirk.credit },
+        { label: '\u2694 ULTRA\u2122 on credit', fn: skus.ultra.credit },
+        { label: '\u{1F4B0} Pay down debt', fn: () => {
+          const paid = payDown(meta, player.gold);
+          player.gold -= paid;
+          fx.hudChanged();
+          dialog.setText(paid > 0
+            ? ('Paid ' + paid + ' g. Balance: ' + meta.credit.balance + ' g.' +
+               (meta.credit.balance === 0 ? ' Cleared. The sticker comes off the file. Stampathy is misty.' : ''))
+            : 'Nothing to pay with, or nothing to pay. Either way the register and I salute the attempt.');
+          dialog.showHint();
+        }},
+        { label: '\u{1F4C4} Read the terms', fn: () => {
+          dialog.say('TRUTH IN LENDING', truthInLending(meta), () => accountMenu());
+        }},
+        { label: 'Back', fn: () => mainMenu() }
+      ]);
+    };
+
+    const mainMenu = () => {
       dialog.setSpeaker(n.name);
       dialog.setText('GLURP\u2122 20g ("Now With Fewer Eels!") \u00B7 DIRK!\u2122 60g ("It\'s basically a sword!") \u00B7 DIRK! ULTRA\u2122 400g ("Engineered.")');
       dialog.open();
       dialog.choice([
-        { label: '\u{1F9EA} GLURP\u2122 \u00B7 20g', fn: () => {
-          if (player.gold >= 20) {
-            player.gold -= 20; player.potions++;
-            fx.sfx('coin'); fx.hudChanged();
-            dialog.setText('Ingredients: fluid, attitude, eels (fewer). Glurp will not fix you.*  (*Glurp will mostly fix you.)');
-          } else dialog.setText('Twenty gold. The eels don\'t remove themselves. Well. Most of them don\'t.');
-          dialog.showHint();
-        }},
-        { label: '\u2694 DIRK!\u2122 \u00B7 60g', fn: () => {
-          if (player.swordLv >= 2) dialog.setText('You already have a DIRK! or better. Brand loyalty. The mascot salutes you. He has arms. Don\'t ask.');
-          else if (player.gold >= 60) {
-            player.gold -= 60; player.swordLv = 2;
-            fx.sfx('level'); fx.hudChanged();
-            dialog.setText('DIRK! It\'s basically a sword! That\'s the whole slogan. Legal made us keep "basically."');
-          } else dialog.setText('Sixty gold. The mascot does not haggle. The mascot is a dirk with arms.');
-          dialog.showHint();
-        }},
-        { label: '\u2694 DIRK! ULTRA\u2122 \u00B7 400g', fn: () => {
-          if (player.swordLv >= 3) dialog.setText('You already swing ULTRA-class or better. The engineers send their regards. All nine of them.');
-          else if (player.gold >= 400) {
-            player.gold -= 400; player.swordLv = 3;
-            fx.sfx('level'); fx.hudChanged();
-            dialog.setText('DIRK! ULTRA. Engineered composite. "Basically a better sword." The materials data sheet is included. It\'s laminated. Hespeth did that.');
-          } else dialog.setText('Four hundred gold. It\'s engineered. You\'re paying for the word "engineered."');
-          dialog.showHint();
-        }},
-        { label: '\u{1F4B3} GLURP\u2122 on credit', fn: () => {
-          if (meta.credentials.debt) {
-            dialog.setText('Your account is already\u2026 *checks* \u2026"crippling." Congratulations. The golem will be pleased. He won\'t show it.');
-          } else {
-            player.potions++;
-            grantDebt(meta);
-            fx.sfx('coin'); fx.hudChanged();
-            dialog.setText('One Glurp, zero gold down, APR best described as "adventurous." Your debt is now officially crippling. This is a credential. Welcome to finance.');
-          }
-          dialog.showHint();
-        }},
+        { label: '\u{1F9EA} GLURP\u2122 \u00B7 20g', fn: skus.glurp.cash },
+        { label: '\u2694 DIRK!\u2122 \u00B7 60g', fn: skus.dirk.cash },
+        { label: '\u2694 ULTRA\u2122 \u00B7 400g', fn: skus.ultra.cash },
+        { label: '\u{1F4B3} Credit & Account', fn: accountMenu },
         { label: 'Leave', fn: () => {
           dialog.setText('\u{1F3B5} If you\'re hurt or sad or cursed or dead-ish\u2014 \u{1F3B5} it loops. Walk fast.');
           dialog.showHint();
         }}
       ]);
-    });
+    };
+
+    const greeting = meta.credit.score >= 750
+      ? ['\u{1F3B5} GLURP! It\'s adventure fluid! \u{1F3B5} \u2014 and WONDERFUL news! Your score pre-qualifies you for the GnollCard\u2122 Preferred at 9.99% APR. I am contractually thrilled. What do you need?']
+      : ['\u{1F3B5} GLURP! It\'s adventure fluid! \u{1F3B5} \u2014 sorry. It loops. What do you need?'];
+    dialog.say(n.name, greeting, mainMenu);
 
   } else if (n.name === 'Hermit Gorse') {
     if (player.swordLv < 1) {
