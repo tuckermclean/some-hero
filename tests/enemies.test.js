@@ -14,15 +14,39 @@ test('mkEnemy copies the archetype', () => {
   assert.equal(mkEnemy('spirit', 0, 0).ghost, true);
 });
 
-test('pickTombKind: cabinets only from floor 3+; Front Office kinds only', () => {
-  for (let s = 0; s < 200; s++) {
-    const k = pickTombKind(1, mulberry32(s));
-    assert.notEqual(k, 'cabinet');
-    assert.ok(['skeleton', 'mailbat', 'consultant'].includes(k));
+test('pickTombKind never returns furniture (cabinets are placed, not spawned)', () => {
+  for (const f of [1, 3, 5, 9]) {
+    for (let s = 0; s < 100; s++) {
+      const k = pickTombKind(f, mulberry32(s * 10 + f));
+      assert.notEqual(k, 'cabinet');
+      assert.ok(['skeleton', 'mailbat', 'consultant'].includes(k));
+    }
   }
-  let sawCabinet = false;
-  for (let s = 0; s < 200; s++) if (pickTombKind(5, mulberry32(s)) === 'cabinet') sawCabinet = true;
-  assert.ok(sawCabinet);
+});
+
+test('the wave: a struck cabinet wakes its neighbors with a delay, down the row', () => {
+  const game = blankGame({ w: 40, h: 40 }), fx = spyFx();
+  // three cabinets in a row, one tile apart; player far away
+  const y = game.player.y, x0 = game.player.x + 300;
+  const a = mkEnemy('cabinet', x0, y);
+  const b = mkEnemy('cabinet', x0 + T, y);
+  const c = mkEnemy('cabinet', x0 + T * 2, y);
+  const far = mkEnemy('cabinet', x0 + T * 10, y);
+  game.enemies = [a, b, c, far];
+
+  a.provoked = true;            // as hitEnemy would set it...
+  b.provokeT = .35;             // ...and arm the neighbor
+
+  updateEnemies(game, .2, VIEW, fx);
+  assert.equal(b.provoked, false, 'still counting down');
+  updateEnemies(game, .2, VIEW, fx);
+  assert.equal(b.provoked, true, 'the second drawer wakes');
+  assert.ok(c.provokeT > 0, 'the third is armed');
+  assert.equal(c.provoked, false);
+  updateEnemies(game, .4, VIEW, fx);
+  assert.equal(c.provoked, true, 'the wave reaches the end of the row');
+  assert.equal(far.provoked, false, 'a different row sleeps on');
+  assert.equal(far.provokeT, 0);
 });
 
 test('behavior flags: passive never chases or hurts; retaliators wait to be struck', () => {

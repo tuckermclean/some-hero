@@ -1,6 +1,6 @@
 // Combat resolution: damage formulas, hitting enemies, hurting the player.
 
-import { ST } from '../constants.js';
+import { T, ST } from '../constants.js';
 import { burst } from '../entities/particles.js';
 import { gainXp } from './progression.js';
 import { dropLoot } from './loot.js';
@@ -45,8 +45,18 @@ export function hitEnemy(game, e, dmg, kx, ky, fx) {
   e.kb = .18; e.kbx = kx; e.kby = ky;
   if (e.retaliates && !e.provoked) {
     e.provoked = true;
-    for (const o of game.enemies) {
-      if (o !== e && o.kind === e.kind && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) < 150) o.provoked = true;
+    if (e.kind === 'cabinet') {
+      // the wave: adjacent drawers arm on a delay, and the dread travels
+      // down the row (propagation continues in updateEnemies)
+      for (const o of game.enemies) {
+        if (o !== e && o.kind === 'cabinet' && !o.dead && !o.provoked && o.provokeT <= 0 &&
+            Math.hypot(o.x - e.x, o.y - e.y) < T * 1.5) o.provokeT = .35;
+      }
+    } else {
+      // the flock remembers, all at once
+      for (const o of game.enemies) {
+        if (o !== e && o.kind === e.kind && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) < 150) o.provoked = true;
+      }
     }
   }
   fx.sfx('hit');

@@ -36,16 +36,16 @@ export function mkEnemy(kind, x, y) {
     hp: base.hp, maxhp: base.hp, spd: base.spd, dmg: base.dmg,
     xpv: base.xp, col: base.col, aggro: base.aggro, ghost: !!base.ghost,
     passive: !!base.passive, retaliates: !!base.retaliates, still: !!base.still,
-    provoked: false,
+    provoked: false, provokeT: 0,
     wx: 0, wy: 0, wt: 0, kb: 0, kbx: 0, kby: 0, flash: 0, dead: false
   };
 }
 
-/** Which enemy kind to spawn on tomb floor f. Cabinets are floor 3+. */
+/** Which enemy kind to spawn on tomb floor f. Cabinets are not spawned —
+ *  they are furniture, placed in rows along walls by the generator. */
 export function pickTombKind(f, rng = Math.random) {
   const r = rng();
-  if (f >= 3 && r < .25) return 'cabinet';
-  if (r < .45) return 'consultant';
-  if (r < .72) return 'mailbat';
+  if (r < .25) return 'consultant';
+  if (r < .55) return 'mailbat';
   return 'skeleton';
 }

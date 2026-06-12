@@ -13,6 +13,19 @@ export function updateEnemies(game, dt, view, fx) {
     if (dist > view.w * 1.4) continue;  // off-screen cull
     e.flash = Math.max(0, e.flash - dt);
 
+    // a waking wave: an armed timer flips to provoked and passes it on
+    if (e.provokeT > 0) {
+      e.provokeT -= dt;
+      if (e.provokeT <= 0) {
+        e.provokeT = 0;
+        e.provoked = true;
+        for (const o of game.enemies) {
+          if (o !== e && o.kind === e.kind && !o.dead && !o.provoked && o.provokeT <= 0 &&
+              Math.hypot(o.x - e.x, o.y - e.y) < T * 1.5) o.provokeT = .35;
+        }
+      }
+    }
+
     // a retaliator is at peace until provoked; furniture doesn't even pace
     const hostile = !e.passive && (!e.retaliates || e.provoked);
 

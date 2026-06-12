@@ -137,13 +137,41 @@ test('absent or bogus forceSeal changes nothing (rng stream intact)', () => {
   assert.deepEqual(bogus.world.map, plain.world.map);
 });
 
+test('cabinets line walls in contiguous runs on floors 3+, never below', () => {
+  for (let s = 1; s <= 12; s++) {
+    const g2 = generateFloor(2, h2, mulberry32(s));
+    assert.equal(g2.enemies.filter(e => e.kind === 'cabinet').length, 0, 'no furniture upstairs');
+  }
+  let sawRun = false;
+  for (let s = 1; s <= 12; s++) {
+    const g = generateFloor(5, h2, mulberry32(s));
+    const cabs = g.enemies.filter(e => e.kind === 'cabinet');
+    if (!cabs.length) continue;
+    sawRun = true;
+    assert.ok(cabs.length >= 2, 'cabinets come in runs');
+    for (const c of cabs) {
+      const tx = Math.floor(c.x / 36), ty = Math.floor(c.y / 36);
+      assert.equal(g.world.map[ty * g.world.w + tx], TL.TF, 'on the floor');
+      // wall-adjacent: at least one cardinal neighbor is solid wall
+      const solidNeighbor = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) =>
+        g.world.map[(ty + dy) * g.world.w + (tx + dx)] === TL.TW);
+      assert.ok(solidNeighbor, 'cabinet hugs a wall');
+      // contiguous: at least one other cabinet exactly one tile away
+      const neighborCab = cabs.some(o => o !== c && Math.hypot(o.x - c.x, o.y - c.y) <= 36.5);
+      assert.ok(neighborCab, 'cabinet is part of a row');
+    }
+  }
+  assert.ok(sawRun, 'rows do appear on deep floors');
+});
+
 test('enemy stats scale with floor depth', () => {
   const g1 = generateFloor(1, h2, mulberry32(2));
   const g9 = generateFloor(9, h2, mulberry32(2));
   const avg = es => es.reduce((s, e) => s + e.maxhp, 0) / es.length;
   assert.ok(avg(g9.enemies) > avg(g1.enemies));
   assert.ok(g9.enemies.length >= g1.enemies.length);
-  assert.ok(g9.enemies.every(e => e.aggro === 260));
+  // combatants get the dungeon aggro radius; the intern is exempt from quotas
+  assert.ok(g9.enemies.filter(e => e.kind !== 'slime').every(e => e.aggro === 260));
 });
 
 test('enemies and loot spawn on walkable tiles', () => {

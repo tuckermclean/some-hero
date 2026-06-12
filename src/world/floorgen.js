@@ -167,6 +167,48 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
       : { kind: 'gold',   x: s.tx * T + T / 2, y: s.ty * T + T / 2, v: 2 });
   }
 
+  // ---- archival furniture (floors 3+): cabinets line the walls in runs.
+  //      You don't want a row of cabinets waking up. They are made of
+  //      steel and don't give a damn. ----
+  if (f >= 3) {
+    const wantRuns = 1 + (rng() * 2 | 0);
+    let placedRuns = 0, guard = 0;
+    while (placedRuns < wantRuns && guard++ < 40) {
+      const r = pickRoom();
+      if (r.w < 4 || r.h < 4) continue;
+      const side = (rng() * 4) | 0;            // 0 top, 1 bottom, 2 left, 3 right
+      const len = 2 + (rng() * 4 | 0);         // 2-5 drawers of trouble
+      const cells = [];
+      if (side < 2) {
+        const ty = side === 0 ? r.y : r.y + r.h - 1;
+        const wy = side === 0 ? ty - 1 : ty + 1;
+        const x0 = r.x + 1 + (rng() * Math.max(1, r.w - len - 1) | 0);
+        for (let i = 0; i < len && x0 + i < r.x + r.w; i++) {
+          if (map[ty * w + (x0 + i)] !== TL.TF || map[wy * w + (x0 + i)] !== TL.TW) break;
+          cells.push([x0 + i, ty]);
+        }
+      } else {
+        const tx = side === 2 ? r.x : r.x + r.w - 1;
+        const wx = side === 2 ? tx - 1 : tx + 1;
+        const y0 = r.y + 1 + (rng() * Math.max(1, r.h - len - 1) | 0);
+        for (let i = 0; i < len && y0 + i < r.y + r.h; i++) {
+          if (map[(y0 + i) * w + tx] !== TL.TF || map[(y0 + i) * w + wx] !== TL.TW) break;
+          cells.push([tx, y0 + i]);
+        }
+      }
+      if (cells.length < 2) continue;
+      for (const [tx, ty] of cells) {
+        const c = mkEnemy('cabinet', tx * T + T / 2, ty * T + T / 2);
+        c.hp = c.maxhp = Math.ceil(c.maxhp * (1 + f * 0.15));
+        c.dmg += (f >> 3);
+        c.xpv += f * 2;
+        c.aggro = 260;
+        enemies.push(c);
+      }
+      placedRuns++;
+    }
+  }
+
   // ---- the interns (outside the combat budget; no quota, no scaling) ----
   const nSlimes = (rng() * 3) | 0;
   for (let i = 0; i < nSlimes; i++) {
