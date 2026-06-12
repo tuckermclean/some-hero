@@ -64,6 +64,6 @@ export function hitEnemy(game, e, dmg, kx, ky, fx) {
     }
     gainXp(game, e.xpv, fx);
     dropLoot(game.pickups, e.x, e.y, game.rng);
-    if (e.kind === 'pigeon' && recordPestKill(game.quest)) fx.questChanged();
+    if (e.kind === 'goose' && recordPestKill(game.quest)) fx.questChanged();
   }
 }

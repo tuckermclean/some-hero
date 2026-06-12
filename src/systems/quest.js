@@ -1,5 +1,5 @@
 // Quest state machine.
-// stage: 0 none, 1 pigeon abatement, 2 claim reward, 3 seek the Reenactor, 4 medallion won.
+// stage: 0 none, 1 goose abatement, 2 claim reward, 3 seek the Reenactor, 4 medallion won.
 
 /** Clerk Hespeth issues the hunt. */
 export function startHunt(quest) {
@@ -7,7 +7,7 @@ export function startHunt(quest) {
   quest.kills = 0;
 }
 
-/** Called when a quest pest (pigeon) dies. Returns true if the quest advanced/changed. */
+/** Called when a quest pest (goose) dies. Returns true if the quest advanced/changed. */
 export function recordPestKill(quest) {
   if (quest.stage !== 1) return false;
   quest.kills++;
@@ -29,7 +29,7 @@ export function completeQuest(quest) {
 /** Overworld quest label (HTML). Your ticket, per the Ledger. */
 export function questLabel(quest, deepest = 0) {
   if (quest.stage === 0) return 'TICKET #44,107: report to <b>Clerk Hespeth</b>';
-  if (quest.stage === 1) return 'Pigeon abatement (a certified Safe task): <b>' + quest.kills + ' / ' + quest.need + '</b>';
+  if (quest.stage === 1) return 'Goose abatement (they started it): <b>' + quest.kills + ' / ' + quest.need + '</b>';
   if (quest.stage === 2) return 'Return to <b>Clerk Hespeth</b> for stamping';
   if (quest.stage === 3) return 'Defeat <b>the Reenactor</b> ↗ NE';
   return '<b>✦ Cancel the apocalypse (Downstairs) ✦</b>' + (deepest > 0 ? ' · depth ' + deepest : '');

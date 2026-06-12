@@ -53,21 +53,21 @@ test('killing an enemy grants xp and drops loot', () => {
   assert.ok(game.pickups.every(p => ['gold', 'heart', 'potion'].includes(p.kind)));
 });
 
-test('pigeon kills advance the hunt quest and flip it to claim stage', () => {
+test('goose kills advance the hunt quest and flip it to claim stage', () => {
   const game = blankGame(), fx = spyFx();
   game.quest.stage = 1; game.quest.kills = 0; game.quest.need = 5;
   for (let i = 0; i < 5; i++) {
-    hitEnemy(game, mkEnemy('pigeon', 0, 0), 99, 0, 0, fx);
+    hitEnemy(game, mkEnemy('goose', 0, 0), 99, 0, 0, fx);
   }
   assert.equal(game.quest.kills, 5);
   assert.equal(game.quest.stage, 2);
   assert.equal(fx.count('questChanged'), 5);
 });
 
-test('non-pigeon kills do not touch the quest', () => {
+test('non-goose kills do not touch the quest', () => {
   const game = blankGame(), fx = spyFx();
   game.quest.stage = 1;
-  hitEnemy(game, mkEnemy('goose', 0, 0), 99, 0, 0, fx);
+  hitEnemy(game, mkEnemy('pigeon', 0, 0), 99, 0, 0, fx);
   assert.equal(game.quest.kills, 0);
 });
 

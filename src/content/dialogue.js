@@ -16,13 +16,13 @@ export function talkTo(n, game, dialog, fx) {
     if (quest.stage === 0) dialog.say(n.name, [
       hespethLine(meta.deaths),
       'TICKET #44,107. "Go downstairs and cancel the apocalypse. Should be quick." *stamp*',
-      'Before the Guild insures you for the Downstairs, prove you can handle pests. Five of the plaza pigeons. They won\'t start it. You will. Stampathy believes in you. Stampathy is a stamp.'
+      'Before the Guild insures you for the Downstairs, prove you can handle pests. Five of the geese. Legally they are not pests — they are "an ongoing incident." Stampathy believes in you. Stampathy is a stamp.'
     ], () => { startHunt(quest); fx.questChanged(); });
     else if (quest.stage === 1) dialog.say(n.name, [
-      'The pigeons. ' + (quest.need - quest.kills) + ' more. Mind the flock — they remember faces. I have prepared the stamp.'
+      'The geese. ' + (quest.need - quest.kills) + ' more. You won\'t have to find them. That is the one mercy of geese. I have prepared the stamp.'
     ]);
     else if (quest.stage === 2) dialog.say(n.name, [
-      'Five pigeons. Verified. Stamped. *stamp* That one wasn\'t necessary. *stamp* Neither was that.',
+      'Five geese. Verified. Stamped. *stamp* That one wasn\'t necessary. *stamp* Neither was that.',
       'Fifty gold, hazard rate. Now: the Reenactor holds the Victory Site northeast. He has performed the Battle of Greater Pflum daily for forty years. Both sides. Alone. Your ticket is, apparently, a prop he needs.',
       'When he charges — he announces it first. Loudly. It\'s theater. You\'ll know.'
     ], () => { claimReward(game); fx.sfx('coin'); fx.hudChanged(); fx.questChanged(); });
