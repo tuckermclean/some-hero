@@ -51,6 +51,22 @@ break room's GLURP-O-MATIC sells (cash or credit) and remembers being
 kicked. Weapon ladder: slap / Pointy / DIRK!(tm) 60g / DIRK! ULTRA(tm) 400g /
 sun-steel (dungeon find); reach scales with the tier.
 
+## The OST (`assets/audio/`, lo-fi electronic, light & dark)
+
+Music is **diegetic** — every track comes from somewhere and is louder the
+closer you are (`audio/music.js`; selection logic is pure and unit-tested).
+*Ledger Lightning Bolt* scores the title screen non-spatially, and the
+splash reacts to its own soundtrack: the stamp re-slams on the 10s drum
+hit, shudders through the 18/19 pickups, and the shine sweeps on the big
+hit at 20. *Audit Microwave* plays from the Guild Hall radio on Hespeth's
+desk (she did not choose it); *Factory Synesthesia* from the imp break
+room's radio on every floor; *Performance Review* radiates from the Warden
+himself — you hear the review approaching; *Apocalypse Cancel* awaits the
+final boss (interim: floor 12). *Gumdrop Verdict* strikes up when the
+Reenactor activates and **hideously winds down** (tape-stop pitch dive)
+when he's killed. Shipped as 128k mp3 with auto-trimmed loop points; WAV
+masters live untracked in `assets/audio/masters/`.
+
 **Knowledge persists across the tab too**: `meta` (deaths, day, credit,
 menace, credentials, the stamp ceremony) autosaves to localStorage
 (`core/save.js`, versioned, forward-compatible merge). Items stay

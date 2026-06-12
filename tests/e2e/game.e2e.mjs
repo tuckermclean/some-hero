@@ -50,6 +50,13 @@ const browser = await chromium.launch({ executablePath });
 const page = await browser.newPage({ viewport: { width: 1024, height: 600 } });
 const pageErrors = [];
 page.on('pageerror', e => pageErrors.push(e.message));
+// the OST is diegetic: each track is fetched lazily when its source first
+// exists — so reaching each zone proves its music wiring
+const fetchedTracks = {};
+page.on('response', r => {
+  const m = r.url().match(/assets\/audio\/(.+)\.mp3$/);
+  if (m) fetchedTracks[m[1]] = r.status();
+});
 
 const shot = name => page.screenshot({ path: join(SHOTS, name + '.png') });
 const ledger = () => page.evaluate(() => document.getElementById('splashLedger').innerText);
@@ -214,6 +221,17 @@ try {
   assert.equal(await page.evaluate(() => window.__sh.game.meta.runs), 2, 'jump started exactly one new run');
   await shot('09-cheat-floor4');
   step('cheat: Floor 4 jump keeps run invariants');
+
+  // ---------- the OST: every source fetched its track in its zone ----------
+  await page.click('#cheatBtn');
+  await page.getByText('Floor 12').click();
+  await page.waitForTimeout(1500);
+  assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 12 });
+  for (const t of ['ledger-lightning-bolt', 'audit-microwave', 'factory-synesthesia',
+                   'performance-review', 'apocalypse-cancel']) {
+    assert.equal(fetchedTracks[t], 200, t + ' fetched by its zone');
+  }
+  step('the OST: title, topside radio, breakroom radio, the review, the apocalypse — all sourced');
 
   await page.click('#cheatBtn');
   await page.locator('#cheatPanel button', { hasText: 'God' }).click();

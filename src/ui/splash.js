@@ -11,6 +11,7 @@ import { SPLASH_START_LINE, splashLine } from '../content/splash.js';
  */
 export function makeSplash(els, { onStart }) {
   const { splash, stamp, ledger, press, embers } = els;
+  const hero = splash.querySelector('.hero');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let i = 0, started = false, typeTimer = 0, emberRaf = 0;
 
@@ -78,6 +79,13 @@ export function makeSplash(els, { onStart }) {
     setTimeout(dismiss, 1500);  // fallback if the transition never fires
   }
 
+  // the stamp slams again, in time (re-trigger via the animation-reset trick;
+  // the .restamp class stays on so the base animation never re-arms)
+  function restamp() {
+    stamp.classList.add('restamp');
+    stamp.style.animation = 'none'; void stamp.offsetWidth; stamp.style.animation = '';
+  }
+
   return {
     /** Route a keydown here while in MENU state. */
     key(e) {
@@ -88,6 +96,13 @@ export function makeSplash(els, { onStart }) {
     pointer(e) {
       if (started) return;
       if (e.target === press) begin(); else react();
+    },
+    /** The title track's drum hits (10s; pickups 18/19; the big one at 20). */
+    beat(sec) {
+      if (started || reduced) return;
+      if (sec === 10 || sec === 20) restamp();
+      else { stamp.classList.remove('wobble'); void stamp.offsetWidth; stamp.classList.add('wobble'); }
+      if (sec === 20) hero.classList.add('resweep');   // one shine, on the hit
     }
   };
 }

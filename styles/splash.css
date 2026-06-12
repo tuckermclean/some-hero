@@ -140,6 +140,15 @@
   70%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(.92)}
   to{opacity:.92;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}
 }
+/* the music's drum hits: the stamp slams again (kept below .wobble so a
+   wobble can interrupt it; the class is sticky and replayed via reset) */
+#splash .stamp.restamp{animation:splashRestamp .3s cubic-bezier(.36,0,.66,-.56) forwards}
+@keyframes splashRestamp{
+  from{opacity:.92;transform:translate(-50%,-50%) rotate(-7deg) scale(1.9)}
+  70%{opacity:1;transform:translate(-50%,-50%) rotate(-7.5deg) scale(.94)}
+  to{opacity:.92;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}
+}
+#splash .hero.resweep::after{animation:splashShine 1.2s ease-in-out forwards}
 #splash .stamp.wobble{animation:splashWobble .4s ease-out}
 @keyframes splashWobble{
   0%{transform:translate(-50%,-50%) rotate(-7deg) scale(1)}

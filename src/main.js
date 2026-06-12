@@ -4,8 +4,9 @@ import { ST, T, VH, VIL } from './constants.js';
 import { createGame, newRun } from './core/game.js';
 import { updateGame } from './core/update.js';
 import { makeEffects } from './core/effects.js';
-import { playSfx, setMuted, isMuted } from './audio/sfx.js';
+import { playSfx, setMuted, isMuted, getAC } from './audio/sfx.js';
 import { updateJingle } from './audio/jingle.js';
+import { updateMusic, onTitleBeat } from './audio/music.js';
 import { loadMeta, saveMeta } from './core/save.js';
 import { makeHud } from './ui/hud.js';
 import { makeToast } from './ui/toast.js';
@@ -86,6 +87,12 @@ const splash = makeSplash(
   { splash: els.splash, stamp: els.splashStamp, ledger: els.splashLedger,
     press: els.splashPress, embers: els.embers },
   { onStart: startGame });
+onTitleBeat(sec => splash.beat(sec));   // the splash reacts to its own soundtrack
+
+// browsers gate audio behind a gesture; any input is consent to be sung at
+function resumeAudio() { try { getAC().resume(); } catch (e) { /* no audio */ } }
+window.addEventListener('keydown', resumeAudio);
+window.addEventListener('pointerdown', resumeAudio);
 
 const fx = makeEffects({
   sfx: playSfx,
@@ -248,6 +255,7 @@ function loop(now) {
   };
   updateGame(game, controls, dt, { w: screen.viewW }, fx);
   updateJingle(game);   // 🎵 it loops. walk fast.
+  updateMusic(game);    // the OST comes from somewhere; closer is louder
   toast.tick(dt);
   render(ctx, game, screen);
   requestAnimationFrame(loop);
