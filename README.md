@@ -64,15 +64,19 @@ room's radio on every floor; *Performance Review* radiates from the Warden
 himself — you hear the review approaching; *Apocalypse Cancel* awaits the
 final boss (interim: floor 12). *Gumdrop Verdict* strikes up when the
 Reenactor activates and **hideously winds down** (tape-stop pitch dive)
-when he's killed. Shipped as 128k mp3 with auto-trimmed loop points; WAV
-masters live untracked in `assets/audio/masters/`.
+when he's killed. And the *GLURP jingle* — the hit single — hums from
+everything that dispenses Glurp: the gift shop topside, every
+GLURP-O-MATIC below (over the imps' radio; that's the joke). Several
+sources can be audible at once; each track fades to its loudest source.
+Shipped as 128k mp3 with auto-trimmed loop points; WAV masters live
+untracked in `assets/audio/masters/`.
 
 **Knowledge persists across the tab too**: `meta` (deaths, day, credit,
 menace, credentials, the stamp ceremony) autosaves to localStorage
 (`core/save.js`, versioned, forward-compatible merge). Items stay
-temporary. The cheat panel has a Wipe save row. The recorded **GLURP
-jingle** (`assets/audio/`) loops near the gift shop and ends with a
-really wet *glurp* — which is the sound of drinking one. Mute button
+temporary. The cheat panel has a Wipe save row. The GLURP jingle is on the album
+(see The OST below) and ends with a really wet *glurp* — which is the
+sound of drinking one. Mute button
 (or M) silences everything, persistently.
 
 ## The roster

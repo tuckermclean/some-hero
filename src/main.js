@@ -5,7 +5,6 @@ import { createGame, newRun } from './core/game.js';
 import { updateGame } from './core/update.js';
 import { makeEffects } from './core/effects.js';
 import { playSfx, setMuted, isMuted, getAC } from './audio/sfx.js';
-import { updateJingle } from './audio/jingle.js';
 import { updateMusic, onTitleBeat } from './audio/music.js';
 import { loadMeta, saveMeta } from './core/save.js';
 import { makeHud } from './ui/hud.js';
@@ -254,8 +253,7 @@ function loop(now) {
     my: m.my !== 0 ? m.my : stick.dy
   };
   updateGame(game, controls, dt, { w: screen.viewW }, fx);
-  updateJingle(game);   // 🎵 it loops. walk fast.
-  updateMusic(game);    // the OST comes from somewhere; closer is louder
+  updateMusic(game);    // the whole album is diegetic; closer is louder
   toast.tick(dt);
   render(ctx, game, screen);
   requestAnimationFrame(loop);

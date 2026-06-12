@@ -1,56 +1,64 @@
-// The OST is diegetic: every track comes from somewhere, louder up close.
-// musicSource/sourceGain are pure; playback stays browser-side.
+// One regime for the whole album: music is diegetic, every track comes
+// from somewhere, several sources can be live at once. musicSources and
+// sourceGain are pure; playback stays browser-side.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ST } from '../src/constants.js';
-import { musicSource, sourceGain } from '../src/audio/music.js';
+import { musicSources, sourceGain } from '../src/audio/music.js';
 import { mkBoss } from '../src/entities/boss.js';
 import { blankGame } from './helpers.js';
 
-test('the title screen plays Ledger Lightning Bolt, non-spatially', () => {
+const byName = (list, name) => list.filter(s => s.name === name);
+
+test('the title screen plays Ledger Lightning Bolt, non-spatially, alone', () => {
   const game = blankGame();
   game.state = ST.MENU;
-  const s = musicSource(game);
-  assert.equal(s.name, 'lightning');
-  assert.equal(s.x, undefined, 'the title screen is its own source');
+  const s = musicSources(game);
+  assert.equal(s.length, 1);
+  assert.equal(s[0].name, 'lightning');
+  assert.equal(s[0].x, undefined, 'the title screen is its own source');
 });
 
-test('topside, the Guild Hall radio plays Audit Microwave from Hespeth\'s desk', () => {
+test('topside: the Guild Hall radio AND the gift shop jingle, simultaneously', () => {
   const game = blankGame();
   game.zone = 'ow';
-  game.npcs = [{ name: 'Clerk Hespeth', x: 500, y: 600 }];
-  const s = musicSource(game);
-  assert.equal(s.name, 'microwave');
-  assert.equal(s.x, 500);
-  assert.equal(s.y, 600);
+  game.npcs = [
+    { name: 'Clerk Hespeth', x: 500, y: 600 },
+    { name: 'Gift Shop Gnoll', x: 800, y: 600 }
+  ];
+  const s = musicSources(game);
+  assert.equal(byName(s, 'microwave')[0].x, 500, 'the radio on Hespeth\'s desk');
+  assert.equal(byName(s, 'jingle')[0].x, 800, 'the hit single, from the shop');
+  assert.equal(s.length, 2, 'both at once — that\'s the album');
 });
 
-test('dungeon floors: Factory Synesthesia from the break room radio', () => {
+test('downstairs: the breakroom radio and the machine\'s own ad, layered', () => {
   const game = blankGame();
   game.zone = 'tomb'; game.floorNum = 2;
   game.npcs = [{ name: 'GLURP-O-MATIC', kind: 'machine', x: 300, y: 300 }];
-  const s = musicSource(game);
-  assert.equal(s.name, 'factory');
-  assert.equal(s.x, 300);
+  const s = musicSources(game);
+  assert.equal(byName(s, 'factory')[0].x, 300);
+  assert.equal(byName(s, 'jingle')[0].x, 300, 'the machine hums its own ad over the imps\' radio');
 });
 
-test('Performance Review radiates from the Warden; the final floor gets the apocalypse', () => {
+test('Performance Review radiates from the Warden; floor 12 gets the apocalypse', () => {
   const game = blankGame();
   game.zone = 'tomb'; game.floorNum = 4;
   game.npcs = [{ name: 'GLURP-O-MATIC', kind: 'machine', x: 300, y: 300 }];
   game.boss = mkBoss(700, 700);
-  let s = musicSource(game);
-  assert.equal(s.name, 'review');
-  assert.equal(s.x, 700, 'the review follows the reviewer');
+  let s = musicSources(game);
+  assert.equal(byName(s, 'review')[0].x, 700, 'the review follows the reviewer');
+  assert.equal(byName(s, 'factory').length, 0, 'the radio defers to the review');
+  assert.equal(byName(s, 'jingle').length, 1, 'the machine does not defer to anyone');
 
   game.floorNum = 12;
-  assert.equal(musicSource(game).name, 'apocalypse');
+  assert.equal(byName(musicSources(game), 'apocalypse').length, 1);
 
   // a concluded review reverts to the working-stiff station
   game.floorNum = 4;
   game.boss.dead = true;
-  assert.equal(musicSource(game).name, 'factory');
+  assert.equal(byName(musicSources(game), 'factory').length, 1);
 });
 
 test('Gumdrop Verdict: the activated Reenactor brings his own accompaniment', () => {
@@ -59,15 +67,15 @@ test('Gumdrop Verdict: the activated Reenactor brings his own accompaniment', ()
   game.npcs = [{ name: 'Clerk Hespeth', x: 500, y: 600 }];
   game.boss = mkBoss(900, 200);
 
-  assert.equal(musicSource(game).name, 'microwave', 'asleep: just the radio');
+  assert.equal(byName(musicSources(game), 'microwave').length, 1, 'asleep: just the radio');
   game.boss.state = 'idle';
-  let s = musicSource(game);
-  assert.equal(s.name, 'gumdrop');
-  assert.equal(s.x, 900, 'the overture follows the performer');
+  const s = musicSources(game);
+  assert.equal(byName(s, 'gumdrop')[0].x, 900, 'the overture follows the performer');
+  assert.equal(byName(s, 'microwave').length, 0, 'the radio yields the stage');
   game.boss.state = 'dash';
-  assert.equal(musicSource(game).name, 'gumdrop', 'any waking state performs');
+  assert.equal(byName(musicSources(game), 'gumdrop').length, 1, 'any waking state performs');
   game.boss.dead = true;
-  assert.equal(musicSource(game).name, 'microwave', 'the verdict is in; back to the radio');
+  assert.equal(byName(musicSources(game), 'microwave').length, 1, 'the verdict is in; back to the radio');
 });
 
 test('sourceGain: full at the source, zero at range, linear between', () => {

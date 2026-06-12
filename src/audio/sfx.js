@@ -2,7 +2,7 @@
 // plays routes through one AudioContext and one master gain, so mute is
 // mute (beeps, stings, and the jingle alike).
 
-import { glurpSting } from './jingle.js';
+import { glurpSting } from './music.js';
 
 let AC = null, MASTER = null;
 let muted = false;
