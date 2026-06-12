@@ -231,5 +231,7 @@ export function generateFloor(f, h2, rng = Math.random, pinned = [], opts = {}) 
   }
 
   return { world, enemies, pickups, blocks, plates, torches, traps, puzzle, boss,
-           spawn: { cx: spawn.cx, cy: spawn.cy }, pinnedRooms };
+           spawn: { cx: spawn.cx, cy: spawn.cy },
+           exit: { cx: exitR.cx, cy: exitR.cy },   // the SD tile; ascending arrives here
+           pinnedRooms };
 }

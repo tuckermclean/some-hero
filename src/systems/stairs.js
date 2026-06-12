@@ -4,7 +4,7 @@
 import { T, TL } from '../constants.js';
 import { tileAt } from '../world/tilemap.js';
 import { stairsOpen, sealMsg } from './puzzles.js';
-import { enterTomb, exitTomb, descend } from '../world/zones.js';
+import { enterTomb, exitTomb, descend, ascend } from '../world/zones.js';
 import { missingCredentials } from './credentials.js';
 
 /**
@@ -40,7 +40,7 @@ export function handleStairs(game, fx) {
   }
   if (v === TL.SU && game.zone === 'tomb') {
     if (game.floorNum <= 1) exitTomb(game, fx);
-    else { game.floorNum -= 2; descend(game, fx); }  // net: one floor up
+    else ascend(game, fx);   // emerge from the hole you went down
     return true;
   }
   return false;

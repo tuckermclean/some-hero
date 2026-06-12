@@ -5,7 +5,7 @@
 // grades will be weird. They will also be true.
 
 import { T, TL, VIL } from '../constants.js';
-import { enterTomb, exitTomb, descend, restoreSurface } from '../world/zones.js';
+import { enterTomb, exitTomb, descend, ascend, restoreSurface } from '../world/zones.js';
 import { hurtPlayer } from './combat.js';
 
 /** An fx clone that holds its tongue (for intermediate floors of a jump). */
@@ -60,11 +60,8 @@ export function gotoFloor(game, n, fx) {
   if (game.zone !== 'tomb') {
     enterTomb(game, n === 1 ? fx : quiet);   // lands on floor 1
   }
-  if (game.floorNum > n) {
-    game.floorNum = n - 1;                   // the stairs.js "go up" idiom
-    descend(game, fx);
-    return;
-  }
+  while (game.floorNum > n + 1) ascend(game, quiet);   // cached floors restore as left
+  if (game.floorNum > n) { ascend(game, fx); return; }
   while (game.floorNum < n - 1) descend(game, quiet);
   if (game.floorNum < n) descend(game, fx);
 }

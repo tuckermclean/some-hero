@@ -97,3 +97,14 @@ test('triggerWin drops the medallion; the magnet finishes the job', () => {
   assert.equal(game.quest.stage, 4);
   assert.equal(fx.count('onAmuletFound'), 1);
 });
+
+test('gotoFloor respects the day: jumping around restores cached floors', () => {
+  const game = seededGame(34), fx = spyFx();
+  game.state = ST.PLAY;
+  gotoFloor(game, 8, fx);
+  const f8world = game.world;
+  gotoFloor(game, 3, fx);
+  assert.equal(game.floorNum, 3);
+  gotoFloor(game, 8, fx);
+  assert.equal(game.world, f8world, 'floor 8 came back as left, not regenerated');
+});

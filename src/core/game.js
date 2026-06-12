@@ -14,6 +14,7 @@ export function createGame({ rng = Math.random } = {}) {
     state: ST.MENU,
     t: 0,
     zone: 'ow', floorNum: 0, deepest: 0, owSave: null,
+    floorCache: {},   // floors hold for the whole run; Skritch redecorates between days
     world: null,
     enemies: [], npcs: [], pickups: [], parts: [],
     boss: null,
@@ -34,6 +35,7 @@ export function createGame({ rng = Math.random } = {}) {
 /** Fresh run: new overworld, repopulate, reset player + quest. Doesn't touch game.state. */
 export function newRun(game) {
   game.zone = 'ow'; game.floorNum = 0; game.deepest = 0; game.owSave = null;
+  game.floorCache = {};
   game.blocks = []; game.plates = []; game.torches = []; game.traps = []; game.puzzle = null; game.pushCd = 0;
   game.world = generateOverworld(game.rng);
   const s = spawnOverworld(game.world, game.rng);
