@@ -104,6 +104,18 @@ try {
   assert.match(await ledger(), /that was the screen/);
   step('clicking the screen is, correctly, not a key');
 
+  // the first gesture already happened — the band must be playing by now
+  const audio = await page.evaluate(async () => {
+    const sfx = await import('./src/audio/sfx.js');
+    const music = await import('./src/audio/music.js');
+    return { ac: sfx.getAC().state, master: sfx.masterOut().gain.value, ...music.musicDebug() };
+  });
+  assert.equal(audio.ac, 'running', 'the AudioContext resumed on the first key');
+  assert.equal(audio.master, 1, 'unmuted');
+  assert.ok(audio.channels.lightning > 0.2, 'the title track is audibly up: ' + audio.channels.lightning);
+  assert.deepEqual(audio.failed, [], 'no tracks failed to decode');
+  step('the band started on the first key (context running, title channel up)');
+
   for (let k = 0; k < 4; k++) { await page.keyboard.press('q'); await page.waitForTimeout(1900); }
   assert.match(await ledger(), /the Start key is Enter/);
   await shot('02-splash-ledger-cracked');
@@ -120,6 +132,30 @@ try {
     getComputedStyle(document.getElementById('splash')).display), 'none');
   await shot('03-overworld-after-start');
   step('Enter starts; the splash fades off the live overworld');
+
+  // ---------- the village reads: a stand on the road, a line that pickets ----------
+  const village = await page.evaluate(() => {
+    const { game } = window.__sh;
+    const T = 36;
+    const gnoll = game.npcs.find(n => n.name === 'Gift Shop Gnoll');
+    const picketers = game.npcs.filter(n => n.name === 'Picketing Hero');
+    return {
+      stand: !!gnoll.stand,
+      onRoad: game.world.map[Math.floor((gnoll.y + 4) / T) * game.world.w + Math.floor(gnoll.x / T)] === 9,
+      picketers: picketers.length,
+      signs: picketers.every(n => n.sign)
+    };
+  });
+  assert.deepEqual(village, { stand: true, onRoad: true, picketers: 3, signs: true });
+  await page.evaluate(() => {
+    const { game } = window.__sh;
+    const g = game.npcs.find(n => n.name === 'Gift Shop Gnoll');
+    game.player.x = g.x - 40; game.player.y = g.y + 30;
+    game.player.tk = Math.floor(game.player.x / 36) + ',' + Math.floor(game.player.y / 36);
+  });
+  await page.waitForTimeout(300);
+  await shot('03b-glurp-stand');
+  step('the Glurp stand is ON the road; the picket line pickets, signed');
 
   // ---------- the Door Golem: ceremony topside, THEN descent ----------
   await page.evaluate(() => {
@@ -145,6 +181,33 @@ try {
   assert.deepEqual(await G(), { zone: 'tomb', state: 1, floor: 1 });
   await shot('05-tomb-after-ceremony');
   step('descent happens only after the stamp');
+
+  // ---------- the break room: furnished, supplied by the machine only ----------
+  const breakroom = await page.evaluate(() => {
+    const { game } = window.__sh;
+    return {
+      tables: game.props.filter(p => p.kind === 'table').length,
+      chairs: game.props.filter(p => p.kind === 'chair').length,
+      loosePotions: game.pickups.filter(p => p.kind === 'potion').length,
+      radioByDoor: !!game.npcs.find(n => n.kind === 'radio')
+    };
+  });
+  assert.deepEqual(breakroom, { tables: 1, chairs: 3, loosePotions: 0, radioByDoor: true });
+  await page.evaluate(() => {
+    const { game } = window.__sh;
+    const m = game.npcs.find(n => n.kind === 'machine');
+    game.player.x = m.x + 50; game.player.y = m.y + 30;
+    game.player.tk = Math.floor(game.player.x / 36) + ',' + Math.floor(game.player.y / 36);
+  });
+  await page.waitForTimeout(300);
+  await shot('05b-breakroom-furnished');
+  await page.evaluate(() => {   // back to the stairs; the tour is over
+    const { game } = window.__sh;
+    game.player.x = game.floorSpawn.cx * 36 + 18;
+    game.player.y = game.floorSpawn.cy * 36 + 18;
+    game.player.tk = game.floorSpawn.cx + ',' + game.floorSpawn.cy;
+  });
+  step('the break room: table, chairs, zero loose Glurp; Skritch greets at the door');
 
   // ---------- the Room That Renovation Forgot ----------
   await page.evaluate(() => {
@@ -266,6 +329,32 @@ try {
   assert.equal(await page.evaluate(() => window.__sh.game.skin), 'pflum');
   await page.click('#cheatBtn');                                           // close the panel
   step('cheat: skin toggles to classic desert and back, live');
+
+  // ---------- knowledge survives the tab; so does mute ----------
+  await page.evaluate(() => {
+    const { game } = window.__sh;
+    game.meta.deaths = 9;
+    game.meta.credit.balance = 33;
+    game.meta.income = 15;
+  });
+  await page.click('#muteBtn');
+  await page.waitForTimeout(5600);          // the 5s dirty-check autosave
+  await page.reload();
+  await page.waitForTimeout(900);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(900);
+  const persisted = await page.evaluate(() => {
+    const { game } = window.__sh;
+    return {
+      deaths: game.meta.deaths,
+      balance: game.meta.credit.balance,
+      income: game.meta.income,
+      mute: localStorage.getItem('sh-mute'),
+      btn: document.getElementById('muteBtn').textContent
+    };
+  });
+  assert.deepEqual(persisted, { deaths: 9, balance: 33, income: 15, mute: '1', btn: '🔇' });
+  step('knowledge survives the tab (deaths, balance, income); so does mute');
 
   assert.deepEqual(pageErrors, [], 'no uncaught page errors');
   console.log(`\ne2e: all ${steps} steps passed. screenshots in tests/e2e/shots/`);
