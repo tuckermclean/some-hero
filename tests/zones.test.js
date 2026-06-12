@@ -14,15 +14,15 @@ test('enterTomb stashes the overworld and lands on floor 1', () => {
   assert.equal(game.zone, 'tomb');
   assert.equal(game.floorNum, 1);
   assert.equal(game.deepest, 1);
-  // the residents down here: the vending machine and Skritch's radio,
-  // at separate addresses (the mix is a walk, not a residence)
+  // the residents down here: the vending machine (break room) and
+  // Skritch's radio, greeting you beside the entry stairs
   assert.equal(game.npcs.length, 2);
   const machine = game.npcs.find(n => n.kind === 'machine');
   const radio = game.npcs.find(n => n.kind === 'radio');
   assert.equal(machine.name, 'GLURP-O-MATIC');
   assert.equal(radio.name, "Skritch's Radio");
-  assert.ok(Math.hypot(machine.x - radio.x, machine.y - radio.y) >= 8 * 36,
-    'the radio keeps its distance from the Glurp');
+  assert.ok(Math.hypot(radio.x - game.player.x, radio.y - game.player.y) <= 2 * 36,
+    'the radio is right by the entry door');
   assert.notEqual(game.world, owWorld);
   assert.equal(game.owSave.world, owWorld);
   assert.equal(game.owSave.enemies, owEnemies);

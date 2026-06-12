@@ -40,10 +40,8 @@ function stashFloor(game) {
 export function applyFloor(game, f, arriveAt = 'spawn') {
   let g = game.floorCache[f];
   if (!g) {
-    // load-bearing rooms the renovation imps can't move: the break area
-    // (Glurp lives here) and Skritch's radio room (music lives there —
-    // separate addresses, so the mix is a walk, not a residence)
-    const pins = [{ w: 5, h: 4, tag: 'breakroom' }, { w: 4, h: 3, tag: 'radio' }];
+    // load-bearing rooms the renovation imps can't move
+    const pins = [{ w: 5, h: 4, tag: 'breakroom' }];   // the imp break area (Glurp lives here)
     if (f === 3) pins.push({ w: 4, h: 3, tag: 'gap' }); // MIND THE GAP (guestbook inside)
     const gen = generateFloor(f, game.world.h2, game.rng, pins,
       { forceSeal: game.debug && game.debug.forceSeal });
@@ -51,8 +49,9 @@ export function applyFloor(game, f, arriveAt = 'spawn') {
     // the break room's vending machine is an NPC: TALK to it. it's fine.
     const breakroom = gen.pinnedRooms.find(r => r.tag === 'breakroom');
     if (breakroom) npcs.push({ name: 'GLURP-O-MATIC', kind: 'machine', x: breakroom.cx * T + T / 2, y: breakroom.cy * T + T / 2 - 8 });
-    const radioRoom = gen.pinnedRooms.find(r => r.tag === 'radio');
-    if (radioRoom) npcs.push({ name: "Skritch's Radio", kind: 'radio', x: radioRoom.cx * T + T / 2, y: radioRoom.cy * T + T / 2 - 4 });
+    // Skritch's radio sits by the entry stairs — the floor greets you with
+    // its set, and the music thins out the deeper into the floor you walk
+    npcs.push({ name: "Skritch's Radio", kind: 'radio', x: (gen.spawn.cx + 1) * T + T / 2, y: gen.spawn.cy * T + T / 2 - 4 });
     g = {
       world: gen.world,
       enemies: gen.enemies, pickups: gen.pickups,
