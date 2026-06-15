@@ -4,6 +4,7 @@ import { T, TL, FINAL_FLOOR } from '../src/constants.js';
 import { enterTomb, exitTomb, descend, ascend } from '../src/world/zones.js';
 import { handleStairs } from '../src/systems/stairs.js';
 import { seededGame, blankGame, spyFx } from './helpers.js';
+import { WITNESSES } from '../src/systems/heist.js';
 
 test('enterTomb stashes the overworld and lands on floor 1', () => {
   const game = seededGame(4), fx = spyFx();
@@ -224,4 +225,59 @@ test('revisited floors say so', () => {
   game.player.tk = 'stale';                    // step back down through the SD
   handleStairs(game, fx);
   assert.match(fx.last('toast')[1], /Floor 2.*As you left it/);
+});
+
+// ---------- witness NPCs (Stratum II deduction) ----------
+
+test('floors 5–9 each inject exactly one witness NPC whose id matches WITNESSES', () => {
+  const game = seededGame(55), fx = spyFx();
+  enterTomb(game, fx);
+  for (let target = 5; target <= 9; target++) {
+    while (game.floorNum < target) descend(game, spyFx());
+    const witness = game.npcs.find(n => n.kind === 'witness');
+    assert.ok(witness, 'floor ' + target + ': witness NPC present');
+    const def = WITNESSES.find(w => w.floor === target);
+    assert.ok(def, 'WITNESSES has entry for floor ' + target);
+    assert.equal(witness.id, def.id, 'floor ' + target + ': NPC id matches definition');
+    assert.equal(witness.name, def.name, 'floor ' + target + ': NPC name matches definition');
+  }
+});
+
+test('floors below 5 have no witness NPC', () => {
+  const game = seededGame(56), fx = spyFx();
+  enterTomb(game, fx);
+  // floors 1–4
+  for (let target = 1; target <= 4; target++) {
+    while (game.floorNum < target) descend(game, spyFx());
+    const witness = game.npcs.find(n => n.kind === 'witness');
+    assert.equal(witness, undefined, 'floor ' + target + ': no witness NPC');
+  }
+});
+
+test('the final floor has no witness NPC', () => {
+  const game = seededGame(57), fx = spyFx();
+  enterTomb(game, fx);
+  while (game.floorNum < FINAL_FLOOR) descend(game, spyFx());
+  const witness = game.npcs.find(n => n.kind === 'witness');
+  assert.equal(witness, undefined, 'final floor: no witness');
+});
+
+test('witness NPC survives ascend→revisit caching', () => {
+  const game = seededGame(58), fx = spyFx();
+  enterTomb(game, fx);
+  while (game.floorNum < 5) descend(game, spyFx());
+  const npcsBefore = game.npcs.map(n => n.id || n.name).join(',');
+  descend(game, spyFx());    // go to 6
+  ascend(game, spyFx());     // come back to 5 (from cache)
+  const npcsAfter = game.npcs.map(n => n.id || n.name).join(',');
+  assert.equal(npcsAfter, npcsBefore, 'floor 5 NPCs identical after revisit');
+});
+
+test('floor 6 injects the Imp Warning Sign NPC alongside the witness', () => {
+  const game = seededGame(59), fx = spyFx();
+  enterTomb(game, fx);
+  while (game.floorNum < 6) descend(game, spyFx());
+  const sign = game.npcs.find(n => n.kind === 'impsign');
+  assert.ok(sign, 'Imp Warning Sign NPC on floor 6');
+  assert.equal(sign.name, 'Imp Warning Sign');
 });

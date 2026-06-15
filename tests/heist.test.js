@@ -5,9 +5,10 @@ import assert from 'node:assert/strict';
 import {
   makeSkullPuzzle, skullAgree, skullCorrect,
   gradeFirstPet, FIRST_PET_ANSWER,
-  menaceEnough, trySignature, MENACE_THRESHOLD
+  menaceEnough, trySignature, MENACE_THRESHOLD,
+  WITNESSES, deduceFirstPet, canConfirmGregory
 } from '../src/systems/heist.js';
-import { createMeta, addMenace } from '../src/core/meta.js';
+import { createMeta, addMenace, hearWitness } from '../src/core/meta.js';
 
 // ---- skull puzzle ----
 
@@ -45,7 +46,77 @@ test('agreeing after done is a no-op', () => {
   assert.deepEqual(s, before, 'no change after done');
 });
 
-// ---- first pet deduction ----
+// ---- witness list + deduction ----
+
+test('WITNESSES: exactly 5 entries, each on a distinct floor 5–9', () => {
+  assert.equal(WITNESSES.length, 5);
+  const floors = WITNESSES.map(w => w.floor);
+  for (let i = 0; i < floors.length; i++) {
+    assert.ok(floors[i] >= 5 && floors[i] <= 9, 'floor in range');
+  }
+  assert.equal(new Set(floors).size, 5, 'all floors distinct');
+});
+
+test('WITNESSES: four animal claimers (pet != null) and one rock pointer (pet == null)', () => {
+  const animals = WITNESSES.filter(w => w.pet !== null);
+  const pointers = WITNESSES.filter(w => w.pet === null);
+  assert.equal(animals.length, 4);
+  assert.equal(pointers.length, 1);
+});
+
+test('deduceFirstPet: returns null when no witnesses heard', () => {
+  assert.equal(deduceFirstPet([]), null);
+});
+
+test('deduceFirstPet: returns null when only some animal claimers heard', () => {
+  assert.equal(deduceFirstPet(['skel', 'goose', 'slime']), null, 'three of four — not enough');
+  assert.equal(deduceFirstPet(['skel', 'bat']), null, 'two — not enough');
+});
+
+test('deduceFirstPet: returns FIRST_PET_ANSWER once all four animal claimers heard', () => {
+  const allFour = ['skel', 'goose', 'slime', 'bat'];
+  assert.equal(deduceFirstPet(allFour), FIRST_PET_ANSWER);
+});
+
+test('deduceFirstPet: order-independent', () => {
+  assert.equal(deduceFirstPet(['bat', 'slime', 'skel', 'goose']), FIRST_PET_ANSWER);
+});
+
+test('deduceFirstPet: extra ids beyond the required four do not break it', () => {
+  assert.equal(deduceFirstPet(['skel', 'goose', 'slime', 'bat', 'sage', 'extra']), FIRST_PET_ANSWER);
+});
+
+test('canConfirmGregory: false before sufficient testimony', () => {
+  const meta = createMeta();
+  assert.equal(canConfirmGregory(meta), false, 'empty heard');
+  hearWitness(meta, 'skel'); hearWitness(meta, 'goose');
+  assert.equal(canConfirmGregory(meta), false, 'partial heard');
+});
+
+test('canConfirmGregory: true after all four animal claimers heard', () => {
+  const meta = createMeta();
+  ['skel', 'goose', 'slime', 'bat'].forEach(id => hearWitness(meta, id));
+  assert.equal(canConfirmGregory(meta), true);
+});
+
+test('hearWitness: idempotent — no duplicate ids in heard', () => {
+  const meta = createMeta();
+  hearWitness(meta, 'skel');
+  hearWitness(meta, 'skel');
+  hearWitness(meta, 'skel');
+  assert.equal(meta.heist.heard.length, 1, 'only recorded once');
+  assert.equal(meta.heist.heard[0], 'skel');
+});
+
+test('hearWitness: multiple different ids accumulate correctly', () => {
+  const meta = createMeta();
+  hearWitness(meta, 'skel');
+  hearWitness(meta, 'goose');
+  hearWitness(meta, 'slime');
+  assert.equal(meta.heist.heard.length, 3);
+});
+
+// ---- first pet deduction (gradeFirstPet — for dialogue free-text fallback) ----
 
 test('gradeFirstPet: Gregory (exact and variants) → true', () => {
   assert.equal(gradeFirstPet('Gregory'), true);

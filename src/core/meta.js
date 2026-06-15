@@ -30,7 +30,8 @@ export function createMeta() {
     heist: {
       skull: false,       // proof of death (the Skull Job via Docent Brell)
       gregory: false,     // security answer — Malgrath's first pet (a rock)
-      signature: false    // account-holder signature (menace earns the gauntlet)
+      signature: false,   // account-holder signature (menace earns the gauntlet)
+      heard: []           // witness ids heard in Stratum II; builds the deduction
     },
     cancelled: false,   // ending A taken: the apocalypse is cancelled
     owner: false        // ending B taken: player becomes the account holder (NG+)
@@ -67,6 +68,15 @@ export function addMenace(meta, deed) {
 /** Grant one heist token by name ('skull', 'gregory', or 'signature'). */
 export function grantToken(meta, which) {
   meta.heist[which] = true;
+  return meta;
+}
+
+/**
+ * Record that the player has heard witness `id` (idempotent — no dup pushes).
+ * Knowledge is permanent; this survives death and newRun via meta.
+ */
+export function hearWitness(meta, id) {
+  if (!meta.heist.heard.includes(id)) meta.heist.heard.push(id);
   return meta;
 }
 

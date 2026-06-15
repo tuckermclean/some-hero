@@ -7,10 +7,10 @@
 import { startHunt, claimReward } from '../systems/quest.js';
 import { hespethLine } from './hespeth.js';
 import { grantBackstory } from '../systems/credentials.js';
-import { addMenace, grantToken } from '../core/meta.js';
+import { addMenace, grantToken, hearWitness } from '../core/meta.js';
 import { ledgerize } from '../systems/ledger.js';
 import { canBorrow, borrow, payDown, aprFor, tierName, creditLimit, minPayment, truthInLending } from '../systems/credit.js';
-import { makeSkullPuzzle, skullAgree, skullCorrect, gradeFirstPet, trySignature, MENACE_THRESHOLD } from '../systems/heist.js';
+import { makeSkullPuzzle, skullAgree, skullCorrect, gradeFirstPet, trySignature, MENACE_THRESHOLD, canConfirmGregory, WITNESSES } from '../systems/heist.js';
 import { deskStatus, applyCancel, applyTransfer } from '../systems/endgame.js';
 
 const pct = apr => (apr * 100).toFixed(2) + '%';
@@ -424,13 +424,17 @@ export function talkTo(n, game, dialog, fx) {
         dialog.open();
         dialog.choice([
           { label: 'Gregory the rock', fn: () => {
-            grantToken(meta, 'gregory');
-            fx.sfx('level');
-            dialog.setText('Oh! You know Gregory! Yes — Gregory. He is right over there. He\'s been right over there for forty years. Rocks don\'t die, dear. That\'s just how rocks are.');
+            if (canConfirmGregory(meta)) {
+              grantToken(meta, 'gregory');
+              fx.sfx('level');
+              dialog.setText('Oh! You know Gregory! Yes — Gregory. He is right over there. He\'s been right over there for forty years. Rocks don\'t die, dear. That\'s just how rocks are.');
+            } else {
+              dialog.setText('A rock? Oh, bless you for trying. Have you been listening to the old-timers downstairs, dear? They all remember, in their own way. Go and sit with them. They\'ll tell you what they know. The truth tends to survive.');
+            }
             dialog.showHint();
           }},
           { label: 'A goose', fn: () => {
-            dialog.setText('No, no. Geese are their OWN problem. Malgrath would never. Try again, dear.');
+            dialog.setText('No, no. Geese are their OWN problem. Malgrath would never. The skeletons have opinions on this, and even THEY are wrong. Try again, dear.');
             dialog.showHint();
           }},
           { label: 'A skeleton', fn: () => {
@@ -451,6 +455,55 @@ export function talkTo(n, game, dialog, fx) {
     } else {
       dialog.say(n.name, ['A rock. Very still. Very grey. There is something about it that suggests it has been here a long time and does not mind this at all.']);
     }
+
+  } else if (n.kind === 'witness') {
+    // An elderly dungeon resident with testimony about Malgrath's first pet.
+    // Hearing them is permanent knowledge (meta.heist.heard survives death/newRun).
+    const def = WITNESSES.find(w => w.id === n.id) || {};
+    const alreadyHeard = meta.heist.heard.includes(n.id);
+    if (alreadyHeard) {
+      dialog.say(n.name, [
+        def.claim || '(They nod, recognizing you.)',
+        'You have already heard this testimony. It still checks out.'
+      ]);
+    } else {
+      dialog.say(n.name, [
+        def.claim || '...',
+        def.tell || '(The detail does not quite add up.)'
+      ], () => {
+        hearWitness(meta, n.id);
+      });
+    }
+
+  } else if (n.name === 'Imp Warning Sign') {
+    // A load-bearing imp warning sign. "DO NOT REFACTOR." Underlined. In red.
+    // Touching it is a petty crime. Touching it is documented.
+    const alreadyDocumented = meta.menace.some(m => /load-bearing/i.test(m.deed));
+    dialog.say(n.name, [
+      'The sign reads: DO NOT REFACTOR.',
+      'In imp handwriting. In red. Underlined three times. There is a small drawing of something terrible happening. The imp who drew it had a very specific something in mind.'
+    ], () => {
+      dialog.setSpeaker(n.name);
+      if (alreadyDocumented) {
+        dialog.setText('You have already tampered with it. The damage is done. The imps know.');
+        dialog.open();
+        dialog.showHint();
+      } else {
+        dialog.setText('The DO NOT REMOVE instinct is strong. But you are a noted person of interest.');
+        dialog.open();
+        dialog.choice([
+          { label: 'Touch it anyway', fn: () => {
+            addMenace(meta, 'tampered with a load-bearing imp warning sign (DO NOT REFACTOR)');
+            dialog.setText('The sign flickers. Somewhere, an imp writes something down. The something is about you. It is not flattering.');
+            dialog.showHint();
+          }},
+          { label: 'Respect the warning', fn: () => {
+            dialog.setText('You do not touch it. You are not sure this was the right call. The sign seems vaguely disappointed.');
+            dialog.showHint();
+          }}
+        ]);
+      }
+    });
 
   } else if (n.name === "Malgrath's Gauntlet") {
     const result = trySignature(meta);

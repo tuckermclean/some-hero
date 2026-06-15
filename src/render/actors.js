@@ -20,6 +20,8 @@ export function drawNpc(ctx, n, game) {
   if (n.kind === 'radio') { drawRadio(ctx, n, game, S); return; }
   if (n.kind === 'rock') { drawRock(ctx, n, game, S); return; }
   if (n.kind === 'desk') { drawCancellationDesk(ctx, n, game, S); return; }
+  if (n.kind === 'witness') { drawWitness(ctx, n, game, S); return; }
+  if (n.kind === 'impsign') { drawImpSign(ctx, n, game, S); return; }
   if (n.stand) drawStand(ctx, n, game, S);   // behind the vendor
   shadow(ctx, n.x, n.y + 10, 9);
   // picketers march in unison (shared phase); everyone else bobs alone
@@ -181,6 +183,72 @@ function drawCancellationDesk(ctx, n, game, S) {
   // paperwork stacks
   ctx.fillStyle = '#f0ead6'; ctx.fillRect(n.x - 8, n.y - 2, 6, 2);
   ctx.fillStyle = '#e8e2ca'; ctx.fillRect(n.x - 8, n.y - 4, 6, 2);
+  if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
+    ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
+    ctx.fillText('!', n.x - 2, n.y - 24 + Math.sin(t * 4) * 2);
+  }
+}
+
+/**
+ * A witness: a stooped elderly dungeon resident with a strong opinion and
+ * a cane. Their hat is slightly too large. This is the look of someone who
+ * has been down here a very long time and has developed opinions about pets.
+ */
+function drawWitness(ctx, n, game, S) {
+  const player = game.player, t = game.t;
+  shadow(ctx, n.x, n.y + 10, 9);
+  const bob = Math.sin(t * 1.2 + n.x) * 0.8;   // slow bob; they are elderly
+  // body: shorter, stooped
+  ctx.fillStyle = n.col || '#7a7a6a';
+  ctx.fillRect(n.x - 6, n.y - 3 + bob, 12, 13);
+  // head
+  ctx.fillStyle = S.actors.skinTone;
+  ctx.beginPath(); ctx.arc(n.x, n.y - 10 + bob, 6, 0, Math.PI * 2); ctx.fill();
+  // large hat, slightly askew
+  ctx.fillStyle = n.hat || '#5a5a4a';
+  ctx.fillRect(n.x - 7, n.y - 16 + bob, 15, 4);
+  ctx.fillRect(n.x - 5, n.y - 20 + bob, 11, 5);
+  // cane: a straight line from the side of the body downward
+  ctx.strokeStyle = '#8a7a5c'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(n.x + 7, n.y - 2 + bob); ctx.lineTo(n.x + 10, n.y + 10 + bob);
+  ctx.stroke();
+  // spectacles (they have been down here long enough to need them)
+  ctx.strokeStyle = '#6a5a3a'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(n.x - 2, n.y - 10 + bob, 2, 0, Math.PI * 2);
+  ctx.arc(n.x + 3, n.y - 10 + bob, 2, 0, Math.PI * 2);
+  ctx.stroke();
+  if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
+    ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
+    ctx.fillText('!', n.x - 2, n.y - 26 + Math.sin(t * 4) * 2);
+  }
+}
+
+/**
+ * The DO NOT REFACTOR sign: a placard on a post. The imp who wrote it had
+ * feelings. Those feelings are preserved in underline.
+ */
+function drawImpSign(ctx, n, game, S) {
+  const player = game.player, t = game.t;
+  shadow(ctx, n.x, n.y + 12, 5);
+  // post
+  ctx.strokeStyle = '#8a7a5c'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(n.x, n.y + 12); ctx.lineTo(n.x, n.y - 6); ctx.stroke();
+  // placard — bright yellow, alarming
+  ctx.fillStyle = '#e8b800'; ctx.fillRect(n.x - 14, n.y - 18, 28, 13);
+  ctx.strokeStyle = '#c0900a'; ctx.lineWidth = 1;
+  ctx.strokeRect(n.x - 14, n.y - 18, 28, 13);
+  // text lines (imp-sized; readable only close up)
+  ctx.fillStyle = '#3a2000'; ctx.font = '4px Trebuchet MS'; ctx.textAlign = 'center';
+  ctx.fillText('DO NOT', n.x, n.y - 11);
+  ctx.fillText('REFACTOR', n.x, n.y - 7);
+  // triple underline, the imp's signature touch
+  ctx.strokeStyle = '#c0900a'; ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath(); ctx.moveTo(n.x - 11, n.y - 5 + i); ctx.lineTo(n.x + 11, n.y - 5 + i); ctx.stroke();
+  }
+  ctx.textAlign = 'left';
   if (Math.hypot(n.x - player.x, n.y - player.y) < 44) {
     ctx.fillStyle = S.pal.paper; ctx.font = 'bold 11px Trebuchet MS';
     ctx.fillText('!', n.x - 2, n.y - 24 + Math.sin(t * 4) * 2);

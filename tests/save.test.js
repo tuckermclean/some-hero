@@ -99,7 +99,7 @@ test('old save lacking heist gains all-false defaults', () => {
   delete old.owner;
   s.setItem(SAVE_KEY, JSON.stringify({ v: 1, meta: old }));
   const loaded = loadMeta(s);
-  assert.deepEqual(loaded.heist, { skull: false, gregory: false, signature: false });
+  assert.deepEqual(loaded.heist, { skull: false, gregory: false, signature: false, heard: [] });
   assert.equal(loaded.cancelled, false);
   assert.equal(loaded.owner, false);
 });
@@ -113,4 +113,24 @@ test('cancelled and owner scalar flags survive a round-trip', () => {
   const loaded = loadMeta(s);
   assert.equal(loaded.cancelled, true);
   assert.equal(loaded.owner, false);
+});
+
+test('heist.heard array survives a round-trip', () => {
+  const s = memStorage();
+  const meta = createMeta();
+  meta.heist.heard = ['skel', 'goose', 'bat'];
+  saveMeta(meta, s);
+  const loaded = loadMeta(s);
+  assert.deepEqual(loaded.heist.heard, ['skel', 'goose', 'bat']);
+});
+
+test('old save lacking heist.heard gains empty array default', () => {
+  const s = memStorage();
+  const old = createMeta();
+  // simulate a save from before `heard` existed
+  old.heist = { skull: true, gregory: false, signature: false };
+  s.setItem(SAVE_KEY, JSON.stringify({ v: 1, meta: old }));
+  const loaded = loadMeta(s);
+  assert.deepEqual(loaded.heist.heard, [], 'missing heard defaults to []');
+  assert.equal(loaded.heist.skull, true, 'existing heist keys preserved');
 });

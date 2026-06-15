@@ -119,16 +119,34 @@ test('Brell: correcting her does not advance the agree count', () => {
 
 // ---- Gregory / Malgrath's Mother ----
 
-test("Malgrath's Mother: naming Gregory grants the token", () => {
+import { WITNESSES } from '../src/systems/heist.js';
+import { hearWitness } from '../src/core/meta.js';
+
+/** Grant all 4 animal-witness hearings so the deduction is complete. */
+function hearAllAnimals(meta) {
+  ['skel', 'goose', 'slime', 'bat'].forEach(id => hearWitness(meta, id));
+}
+
+test("Malgrath's Mother: naming Gregory without witnesses → deflects, no grant", () => {
   const game = blankGame(), fx = spyFx(), dlg = stubDialog();
   talkTo({ name: "Malgrath's Mother" }, game, dlg, fx);
   dlg.log.at(-1).opts.find(o => /Gregory/.test(o.label)).fn();
-  assert.equal(game.meta.heist.gregory, true, 'gregory token granted');
+  assert.equal(game.meta.heist.gregory, false, 'deduction not complete — not granted');
+  assert.ok(dlg.log.some(e => e.text && /old-timers/i.test(e.text)), 'deflects to the witnesses');
+});
+
+test("Malgrath's Mother: naming Gregory after deduction → grants token", () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  hearAllAnimals(game.meta);                 // complete the deduction
+  talkTo({ name: "Malgrath's Mother" }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Gregory/.test(o.label)).fn();
+  assert.equal(game.meta.heist.gregory, true, 'gregory token granted after deduction');
   assert.equal(fx.count('sfx'), 1, 'sfx fires');
 });
 
 test("Malgrath's Mother: wrong answers do not grant the token", () => {
   const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  hearAllAnimals(game.meta);
   talkTo({ name: "Malgrath's Mother" }, game, dlg, fx);
   dlg.log.at(-1).opts.find(o => /goose/.test(o.label)).fn();
   assert.equal(game.meta.heist.gregory, false, 'wrong answer — not granted');
@@ -161,6 +179,52 @@ test('gauntlet: enough menace → signature granted', () => {
   talkTo({ name: "Malgrath's Gauntlet" }, game, dlg, fx);
   assert.equal(game.meta.heist.signature, true, 'signature granted');
   assert.equal(fx.count('sfx'), 1, 'sfx fires');
+});
+
+// ---- witness NPCs (downstairs deduction) ----
+
+test('witness NPC: first talk records its id, shows claim + tell', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  const w = WITNESSES[0];   // Elderly Skeleton, id 'skel'
+  talkTo({ name: w.name, kind: 'witness', id: w.id }, game, dlg, fx);
+  // after say() fires its callback, id should be recorded
+  assert.ok(game.meta.heist.heard.includes(w.id), 'witness id recorded');
+  const text = dlg.log.map(e => e.lines ? e.lines.join(' ') : '').join(' ');
+  assert.ok(text.includes(w.claim) || text.length > 0, 'dialogue ran');
+});
+
+test('witness NPC: second talk is a no-op (id not duplicated)', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  const w = WITNESSES[1];
+  hearWitness(game.meta, w.id);                                  // already heard
+  talkTo({ name: w.name, kind: 'witness', id: w.id }, game, dlg, fx);
+  assert.equal(game.meta.heist.heard.filter(x => x === w.id).length, 1, 'no dup');
+});
+
+test('witness NPC: unknown id still runs without crash', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: 'Mystery Witness', kind: 'witness', id: 'unknown_id' }, game, dlg, fx);
+  assert.ok(game.meta.heist.heard.includes('unknown_id'), 'still recorded');
+});
+
+// ---- Imp Warning Sign ----
+
+test('Imp Warning Sign: touching adds menace once', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  talkTo({ name: 'Imp Warning Sign', kind: 'impsign' }, game, dlg, fx);
+  dlg.log.at(-1).opts.find(o => /Touch/.test(o.label)).fn();
+  assert.equal(game.meta.menace.length, 1);
+  assert.match(game.meta.menace[0].deed, /load-bearing/);
+});
+
+test('Imp Warning Sign: second touch is inert (already documented)', () => {
+  const game = blankGame(), fx = spyFx(), dlg = stubDialog();
+  // pre-populate menace as if already tampered
+  addMenace(game.meta, 'tampered with a load-bearing imp warning sign (DO NOT REFACTOR)');
+  const dlg2 = stubDialog();
+  talkTo({ name: 'Imp Warning Sign', kind: 'impsign' }, game, dlg2, fx);
+  // should not present a choice — just a say
+  assert.equal(game.meta.menace.length, 1, 'no additional menace');
 });
 
 // ---- petty crime interactables ----

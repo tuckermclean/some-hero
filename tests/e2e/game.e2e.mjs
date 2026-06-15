@@ -365,17 +365,87 @@ try {
   // At this point: post-reload, overworld, meta known (deaths:9 etc). The page
   // is at quest stage 0 and zone 'ow'. We'll use cheats for speed.
 
-  // Grant the three Act II tokens
+  // ---- witness deduction path ----
+  // Floor 8 has a witness NPC (the Elderly Mailbat, id:'bat').
+  // Talk to it, verify the id is recorded, then cheat-hear all witnesses
+  // and confirm Gregory via Malgrath's Mother.
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'Floor 8' }).click();
+  await page.waitForTimeout(1200);
+  const witnessCheck = await page.evaluate(() => {
+    const { game } = window.__sh;
+    const w = game.npcs.find(n => n.kind === 'witness');
+    return { present: !!w, id: w && w.id, name: w && w.name };
+  });
+  assert.equal(witnessCheck.present, true, 'floor 8: witness NPC present');
+  assert.equal(witnessCheck.id, 'bat', 'floor 8: correct witness id');
+  await shot('23-floor8-witness');
+  step('Floor 8: Elderly Mailbat witness NPC present');
+
+  // Talk to the witness; its id should appear in meta.heist.heard
+  await page.evaluate(() => {
+    const { game, fx } = window.__sh;
+    const w = game.npcs.find(n => n.kind === 'witness');
+    fx.requestTalk(w);
+  });
+  await page.waitForTimeout(400);
+  // advance through the dialog (claim + tell)
+  await page.mouse.click(500, 120); await page.waitForTimeout(200);
+  await page.mouse.click(500, 120); await page.waitForTimeout(200);
+  const heardAfterTalk = await page.evaluate(() => window.__sh.game.meta.heist.heard);
+  assert.ok(heardAfterTalk.includes('bat'), 'bat id recorded after talking to witness');
+  step('Witness talk: id recorded in meta.heist.heard');
+
+  // "Hear witnesses" cheat: records all 5 witness ids
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'Hear witnesses' }).click();
+  await page.waitForTimeout(200);
+  await page.click('#cheatBtn');   // close panel
+  const heardAll = await page.evaluate(() => window.__sh.game.meta.heist.heard);
+  for (const id of ['skel', 'goose', 'slime', 'bat', 'sage']) {
+    assert.ok(heardAll.includes(id), 'heard after cheat: ' + id);
+  }
+  step('Hear witnesses cheat: all 5 witness ids in meta.heist.heard');
+
+  // Surface (Guild Hall cheat — skips customs, gets us topside instantly)
+  await page.click('#cheatBtn');
+  await page.locator('#cheatPanel button', { hasText: 'Guild Hall' }).click();
+  await page.waitForTimeout(400);
+  assert.equal((await G()).zone, 'ow', 'back to overworld');
+
+  // Talk to Malgrath's Mother and confirm Gregory via the completed deduction
+  await page.evaluate(() => {
+    const { game, fx } = window.__sh;
+    const mother = game.npcs.find(n => n.name === "Malgrath's Mother");
+    fx.requestTalk(mother);
+  });
+  await page.waitForTimeout(400);
+  // advance through the opening lines to the choice
+  await page.mouse.click(500, 120); await page.waitForTimeout(200);
+  await page.mouse.click(500, 120); await page.waitForTimeout(300);
+  await page.getByText('Gregory the rock').click();
+  await page.waitForTimeout(300);
+  const gregoryGranted = await page.evaluate(() => window.__sh.game.meta.heist.gregory);
+  assert.equal(gregoryGranted, true, 'gregory granted via Mother-confirm path');
+  // dismiss dialog
+  await page.mouse.click(500, 120); await page.waitForTimeout(200);
+  await shot('24-gregory-confirmed');
+  step('Malgrath\'s Mother: confirmed Gregory after deduction → meta.heist.gregory true');
+
+  // Grant remaining tokens (skull + signature; gregory already set)
   await page.click('#cheatBtn');
   await page.locator('#cheatPanel button', { hasText: 'Grant triangle' }).click();
   await page.waitForTimeout(300);
-  const triangle = await page.evaluate(() => {
+  const triangleAfter = await page.evaluate(() => {
     const { game } = window.__sh;
-    return { ...game.meta.heist };
+    return { skull: game.meta.heist.skull, gregory: game.meta.heist.gregory,
+             signature: game.meta.heist.signature };
   });
-  assert.deepEqual(triangle, { skull: true, gregory: true, signature: true });
+  assert.equal(triangleAfter.skull, true, 'skull granted');
+  assert.equal(triangleAfter.gregory, true, 'gregory still true');
+  assert.equal(triangleAfter.signature, true, 'signature granted');
   await page.click('#cheatBtn');  // close panel
-  step('Grant triangle: all three heist tokens granted');
+  step('Grant triangle: skull + signature granted; gregory persisted from deduction');
 
   // Jump to floor 12 and verify the final floor
   await page.click('#cheatBtn');

@@ -1,6 +1,7 @@
 // Zone transitions: overworld <-> tomb, descending and ascending floors.
 
 import { T, FINAL_FLOOR } from '../constants.js';
+import { WITNESSES } from '../systems/heist.js';
 import { generateFloor } from './floorgen.js';
 import { startRun, recordDepth } from '../core/meta.js';
 import { newRunStats, gradeRun, gradeRemark } from '../systems/ledger.js';
@@ -44,6 +45,9 @@ export function applyFloor(game, f, arriveAt = 'spawn') {
     const pins = [{ w: 5, h: 4, tag: 'breakroom' }];   // the imp break area (Glurp lives here)
     if (f === 3) pins.push({ w: 4, h: 3, tag: 'gap' }); // MIND THE GAP (guestbook inside)
     if (f >= FINAL_FLOOR) pins.push({ w: 6, h: 5, tag: 'desk' }); // the Cancellation Desk
+    // Stratum II + III witnesses: one elderly monster per floor holds a testimony
+    // about Malgrath's first pet. Deduction builds from hearing all four animal-claimers.
+    if (f >= 5 && f < FINAL_FLOOR) pins.push({ w: 4, h: 3, tag: 'witness' });
     const gen = generateFloor(f, game.world.h2, game.rng, pins,
       { forceSeal: game.debug && game.debug.forceSeal });
     const npcs = [];
@@ -55,6 +59,21 @@ export function applyFloor(game, f, arriveAt = 'spawn') {
     if (deskRoom) npcs.push({ name: 'Cancellation Desk', kind: 'desk',
       x: deskRoom.cx * T + T / 2, y: deskRoom.cy * T + T / 2 - 4,
       col: '#5a4030', hat: '#3a2820' });
+    // Stratum II-III witness: the elderly monster whose testimony builds the deduction
+    const witnessRoom = gen.pinnedRooms.find(r => r.tag === 'witness');
+    const witnessDef = WITNESSES.find(w => w.floor === f);
+    if (witnessRoom && witnessDef) {
+      npcs.push({ name: witnessDef.name, kind: 'witness', id: witnessDef.id,
+        x: witnessRoom.cx * T + T / 2, y: witnessRoom.cy * T + T / 2 - 4,
+        col: '#7a7a6a', hat: '#5a5a4a' });
+    }
+    // On floor 6, the break room has a load-bearing imp warning sign.
+    // Touching it — an active choice — documents a petty crime.
+    if (f === 6 && breakroom) {
+      npcs.push({ name: 'Imp Warning Sign', kind: 'impsign',
+        x: breakroom.cx * T - T / 2, y: breakroom.cy * T - T / 2 - 4,
+        col: '#c8a04a', hat: '#8a5a1a' });
+    }
     // Skritch's radio sits by the entry stairs — the floor greets you with
     // its set, and the music thins out the deeper into the floor you walk
     npcs.push({ name: "Skritch's Radio", kind: 'radio', x: (gen.spawn.cx + 1) * T + T / 2, y: gen.spawn.cy * T + T / 2 - 4 });

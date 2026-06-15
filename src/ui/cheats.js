@@ -78,6 +78,7 @@ export function makeCheats(game, fx, { skins } = {}) {
     fx.toast('The golem writes something in his little book.');
   });
   btn(r, 'Grant triangle', () => { dbg.grantHeist(game, fx); });
+  btn(r, 'Hear witnesses', () => { dbg.hearAllWitnesses(game, fx); });
 
   // ---- SET ----
   head('SET');

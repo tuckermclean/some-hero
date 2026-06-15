@@ -7,8 +7,9 @@
 import { T, TL, VIL, FINAL_FLOOR } from '../constants.js';
 import { enterTomb, exitTomb, descend, ascend, restoreSurface } from '../world/zones.js';
 import { hurtPlayer } from './combat.js';
-import { grantToken } from '../core/meta.js';
+import { grantToken, hearWitness } from '../core/meta.js';
 import { killBoss } from './attack.js';
+import { WITNESSES } from './heist.js';
 
 /** An fx clone that holds its tongue (for intermediate floors of a jump). */
 function muted(fx) {
@@ -112,6 +113,15 @@ export function grantHeist(game, fx) {
   grantToken(game.meta, 'gregory');
   grantToken(game.meta, 'signature');
   fx.toast('Heist triangle granted. Skull, Gregory, Signature — all yours. The gauntlet signed off.');
+}
+
+/**
+ * Record all witness testimonies as heard. Unlocks the Mother-confirm path
+ * without requiring the player to descend floors 5–9. Deterministic for e2e.
+ */
+export function hearAllWitnesses(game, fx) {
+  for (const w of WITNESSES) hearWitness(game.meta, w.id);
+  fx.toast('All witness testimonies recorded. The deduction is complete. Go ask the Mother.');
 }
 
 /**
